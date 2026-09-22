@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Tema do painel = tema do app Duka (theme/colors.ts do app mobile), pra que o
+  JARVIS pareça parte do mesmo produto. Escuro por padrão; o claro entra quando
+  o sistema pede. Tokens em RGB separado por espaço pra combinar com o
+  `<alpha-value>` do Tailwind.
+*/
+:root {
+  --bg: 13 10 20;          /* #0D0A14 */
+  --surface: 23 16 42;     /* #17102A */
+  --elev: 33 24 64;        /* #211840 */
+  --border: 45 31 68;      /* #2D1F44 */
+  --border-subtle: 30 20 53;
+  --fg: 240 232 250;       /* #F0E8FA */
+  --fg2: 184 165 212;      /* #B8A5D4 */
+  --muted: 122 106 153;    /* #7A6A99 */
+  --brand: 172 83 213;     /* #AC53D5 */
+  --brand-dark: 125 47 168;
+  --brand-soft: 42 18 69;  /* #2A1245 */
+  --brand-text: 199 122 224;
+  --p0: 248 113 113;
+  --p1: 251 146 60;
+  --p2: 250 204 21;
+  --p3: 184 165 212;
+  --ok: 74 222 128;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: 250 248 253;
+    --surface: 255 255 255;
+    --elev: 255 255 255;
+    --border: 229 222 240;
+    --border-subtle: 239 234 247;
+    --fg: 36 26 53;
+    --fg2: 91 74 117;
+    --muted: 142 127 168;
+    --brand: 172 83 213;
+    --brand-dark: 125 47 168;
+    --brand-soft: 242 232 250;
+    --brand-text: 125 47 168;
+    --p0: 220 38 38;
+    --p1: 234 88 12;
+    --p2: 202 138 4;
+    --p3: 142 127 168;
+    --ok: 22 163 74;
+  }
+}
+
+html, body {
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
+}
+
+* { border-color: rgb(var(--border)); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgb(var(--border)); border-radius: 8px; }
+
+@layer components {
+  /* botão "clay" do Duka: cheio, com a borda de baixo mais escura */
+  .clay {
+    @apply inline-flex h-9 items-center gap-2 rounded-2xl bg-brand px-4 font-display text-sm font-bold text-white transition active:translate-y-[2px] active:border-b-2;
+    border-bottom: 4px solid rgb(var(--brand-dark));
+  }
+  .clay:disabled { @apply cursor-not-allowed opacity-50; }
+  /* botão secundário */
+  .soft {
+    @apply inline-flex h-9 items-center gap-2 rounded-2xl border bg-elev px-3 font-display text-sm font-bold text-fg transition hover:bg-brandSoft active:translate-y-[2px];
+    border-bottom-width: 4px;
+  }
+  .chip {
+    @apply inline-flex h-7 items-center gap-1.5 rounded-full border bg-surface px-2.5 font-display text-xs font-bold text-fg2 transition hover:text-fg;
+  }
+  .chip-on { @apply border-brand bg-brandSoft text-brandText; }
+  .card { @apply rounded-2xl border bg-surface p-4; }
+  .card-h { @apply mb-2 font-display text-sm font-bold; }
+  .kicker { @apply text-[11px] text-muted; }
+  .input {
+    @apply h-9 w-full rounded-2xl border bg-surface px-3 text-sm outline-none placeholder:text-muted focus:border-brand;
+    border-bottom-width: 3px;
+  }
+}

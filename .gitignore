@@ -1,0 +1,57 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env — NUNCA commitar. A anon key é publicável, mas o arquivo fica de fora por higiene.
+.env
+.env.local
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# jarvis-voice (python)
+jarvis-voice/.venv/
+jarvis-voice/__pycache__/
+
+# vercel
+.vercel
+
+# dados de alunos (telefone, nome, escola) — NUNCA no GitHub; a fonte é o banco (support.alunos_whatsapp)
+data/*.csv
+data/scan/
+data/exports/
+!data/README.md
+
+# python
+__pycache__/
+scripts/__pycache__/
+jarvis-voice/__pycache__/
+jarvis-voice/.venv/
+
+# contexto local do Claude (tem e-mails e ids de conta do Ian). O repositório
+# duka_sac é PÚBLICO — se virar privado, pode tirar estas duas linhas.
+.claude/
+CLAUDE.md
+
+# deploy
+.railway/

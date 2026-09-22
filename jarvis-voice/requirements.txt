@@ -1,0 +1,4 @@
+# O torch com CUDA é instalado pelo start.ps1 (índice do PyTorch), não daqui.
+chatterbox-tts
+fastapi
+uvicorn[standard]
