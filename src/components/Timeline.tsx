@@ -3,7 +3,7 @@ import { fullDate } from '@/lib/format'
 
 const TYPE_LABEL: Record<string, string> = {
   created: 'criado', status: 'status', priority: 'prioridade',
-  reply: 'respondeu', whatsapp: 'WhatsApp', note: 'nota', merge: 'fundiu', duplicate: 'duplicado',
+  reply: 'respondeu', whatsapp: 'WhatsApp', apelido: 'apelido', note: 'nota', merge: 'fundiu', duplicate: 'duplicado',
 }
 
 export function Timeline({ events }: { events: TicketEvent[] }) {
@@ -16,8 +16,8 @@ export function Timeline({ events }: { events: TicketEvent[] }) {
           <span className="min-w-0">
             <span className="font-medium">{e.actor}</span>{' '}
             <span className="text-muted">{TYPE_LABEL[e.type] ?? e.type}</span>
-            {e.from_value && e.to_value && (
-              <span className="text-muted"> · {e.from_value} → <strong className="text-fg">{e.to_value}</strong></span>
+            {(e.from_value || e.to_value) && (
+              <span className="text-muted"> · {e.from_value ?? '—'} → <strong className="text-fg">{e.to_value ?? '—'}</strong></span>
             )}
             {e.body && <div className="mt-0.5 whitespace-pre-wrap text-muted">{e.body}</div>}
           </span>

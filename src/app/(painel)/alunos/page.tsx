@@ -27,7 +27,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     pub.from('ai_usage').select('user_id, feature, total_tokens, ok, cost_usd, created_at').gte('created_at', `${since}T00:00:00Z`).limit(50000),
     pub.from('simulations').select('user_id, total_questions, correct_answers, status, started_at').limit(20000),
     pub.from('essays').select('user_id, created_at').limit(20000),
-    supabase.from('tickets').select('id, ref, title, priority, status, user_id, created_at').limit(5000),
+    supabase.from('tickets').select('id, ref, apelido, title, priority, status, user_id, created_at').limit(5000),
     // planilha do WhatsApp (migration 089): o que o scan gravou
     supabase.from('alunos_whatsapp').select('telefone, contato, nome, telefone_informado, escola_bruta, ano_bruto, status, observacao, cadastrado_no_bot, registrado_no_app, ultima_msg, atualizado_em').limit(10000),
     supabase.from('contatos_whatsapp').select('user_id, telefone, escola, ano, como').limit(5000),

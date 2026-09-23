@@ -10,6 +10,7 @@ import { Timeline } from '@/components/Timeline'
 import { TicketActions } from '@/components/TicketActions'
 import { ReplyBox } from '@/components/ReplyBox'
 import { WhatsappStatus } from '@/components/WhatsappStatus'
+import { ApelidoTicket } from '@/components/ApelidoTicket'
 import { timeAgo, fullDate } from '@/lib/format'
 
 /**
@@ -32,8 +33,8 @@ export async function TicketDetalhe({ id }: { id: number }) {
       ? supabase.rpc('telefone_do_usuario', { p_user: t.user_id })
       : Promise.resolve({ data: null as string | null }),
     t.user_id
-      ? supabase.from('tickets').select('id, ref, kind, status').eq('user_id', t.user_id).neq('id', id).limit(5)
-      : Promise.resolve({ data: [] as { id: number; ref: string }[] }),
+      ? supabase.from('tickets').select('id, ref, apelido, kind, status').eq('user_id', t.user_id).neq('id', id).limit(5)
+      : Promise.resolve({ data: [] as { id: number; ref: string; apelido: string | null }[] }),
   ])
   const { data: profile } = t.user_id
     ? await supabase.schema('public').from('users')
@@ -42,7 +43,7 @@ export async function TicketDetalhe({ id }: { id: number }) {
     : { data: null }
 
   const meta = KIND_META[t.kind]
-  const others = (related?.data ?? []) as { id: number; ref: string }[]
+  const others = (related?.data ?? []) as { id: number; ref: string; apelido: string | null }[]
   const premium = profile && (profile.premium_status === 'premium' || profile.premium_status === 'trial')
 
   return (
@@ -55,7 +56,8 @@ export async function TicketDetalhe({ id }: { id: number }) {
             <StatusPill status={t.status} />
             <span className="font-mono text-xs text-muted">{t.ref}</span>
           </div>
-          <h1 className="mt-1.5 font-display text-lg font-extrabold leading-tight">{t.title || `${meta.icon} ${meta.label}`}</h1>
+          <ApelidoTicket id={t.id} apelido={t.apelido} />
+          <h1 className={`font-display font-extrabold leading-tight ${t.apelido ? 'mt-0.5 text-sm text-fg2' : 'mt-1.5 text-lg'}`}>{t.title || `${meta.icon} ${meta.label}`}</h1>
           <div className="mt-0.5 text-xs text-muted">
             {t.source === 'user' || t.source === 'nps' ? 'manual' : 'automático'} · aberto {timeAgo(t.created_at)} · última atividade {timeAgo(t.last_seen_at)}
             {t.affected_users > 1 && <span className="font-medium text-fg2"> · 👥 afeta {t.affected_users} pessoas · {t.occurrences} ocorrências</span>}
@@ -116,7 +118,7 @@ export async function TicketDetalhe({ id }: { id: number }) {
             {others.length > 0 && (
               <div className="mt-2 text-xs">
                 <span className="text-muted">Outros tickets: </span>
-                {others.map((o) => <Link key={o.id} href={`/tickets?t=${o.id}`} scroll={false} className="mr-1 text-brandText underline">{o.ref}</Link>)}
+                {others.map((o) => <Link key={o.id} href={`/tickets?t=${o.id}`} scroll={false} className="mr-1 text-brandText underline" title={o.apelido ?? undefined}>{o.apelido ? `${o.ref} · ${o.apelido}` : o.ref}</Link>)}
               </div>
             )}
           </div>

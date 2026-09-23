@@ -11,7 +11,7 @@ import { timeAgo, deviceLine, pluralPessoas } from '@/lib/format'
 const PAGE = 50
 const SELECT =
   'id, ref, kind, source, status, priority, priority_source, priority_reason, ' +
-  'title, message, reporter_name, reporter_email, was_premium, occurrences, ' +
+  'apelido, title, message, reporter_name, was_premium, occurrences, ' +
   'affected_users, platform, os_version, app_version, device_model, ' +
   'last_seen_at, created_at'
 
@@ -44,7 +44,7 @@ export function FilaLista({ selected }: { selected: number | null }) {
     let query = supabase.from('tickets').select(SELECT) as any
     if (statuses.length) query = query.in('status', statuses)
     if (priority) query = query.eq('priority', priority)
-    if (q.trim()) query = query.or(`title.ilike.%${q}%,message.ilike.%${q}%,ref.ilike.%${q}%`)
+    if (q.trim()) query = query.or(`apelido.ilike.%${q}%,title.ilike.%${q}%,message.ilike.%${q}%,ref.ilike.%${q}%`)
     query = query.order('priority', { ascending: true }).order('last_seen_at', { ascending: false })
       .range(p * PAGE, p * PAGE + PAGE - 1)
     const { data, error } = await query
@@ -103,7 +103,8 @@ export function FilaLista({ selected }: { selected: number | null }) {
             >
               <div className="mt-0.5 shrink-0"><PriorityTag priority={t.priority} reasons={t.priority_reason} /></div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[12.5px] font-bold">{t.title || t.message || `${KIND_META[t.kind].icon} ${KIND_META[t.kind].label}`}</div>
+                <div className="truncate text-[12.5px] font-bold">{t.apelido || t.title || t.message || `${KIND_META[t.kind].icon} ${KIND_META[t.kind].label}`}</div>
+                {t.apelido && <div className="truncate text-[11px] text-fg2">{t.title || t.message}</div>}
                 <div className="mt-0.5 truncate text-[11px] text-muted">
                   <span className="font-mono">{t.ref}</span>
                   {' · '}{KIND_META[t.kind].label}

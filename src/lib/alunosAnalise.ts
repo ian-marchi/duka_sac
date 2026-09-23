@@ -14,7 +14,7 @@ import type { Aluno, ResumoAlunos } from './alunos'
 export type Item = { label: string; value: number }
 export type SimRow = { user_id: string; total_questions: number | null; correct_answers: number | null; status: string | null; started_at: string }
 export type EssayRow = { user_id: string; created_at: string }
-export type TicketLite = { id: number; ref: string; title: string | null; priority: string; status: string; user_id: string | null; created_at: string }
+export type TicketLite = { id: number; ref: string; apelido: string | null; title: string | null; priority: string; status: string; user_id: string | null; created_at: string }
 
 export type RelatoriosBase = {
   origem: { escolas: Item[]; tipoEscola: Item[]; canal: Item[]; exames: Item[]; cursos: Item[] }

@@ -174,3 +174,17 @@ export async function descartarWhatsapp(outboxId: number) {
   revalidatePath('/tickets')
   return { ok: true }
 }
+
+// Apelido do ticket (migration 092): nome curto só do painel. Vazio = sem apelido.
+export async function setApelido(id: number, apelido: string) {
+  const { supabase, email } = await actor()
+  const novo = apelido.replace(/\s+/g, ' ').trim().slice(0, 60) || null
+  const { data: antes } = await supabase.from('tickets').select('apelido').eq('id', id).single()
+  const { error } = await supabase.from('tickets').update({ apelido: novo }).eq('id', id)
+  if (error) return { error: error.message }
+  await supabase.from('ticket_events').insert({
+    ticket_id: id, actor: email, type: 'apelido', from_value: antes?.apelido ?? null, to_value: novo,
+  })
+  revalidatePath('/tickets')
+  return { ok: true }
+}

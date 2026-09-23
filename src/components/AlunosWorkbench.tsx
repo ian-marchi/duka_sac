@@ -232,7 +232,7 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
                 <Link key={t.id} href={`/tickets?t=${t.id}`} className="flex items-center gap-2 rounded-xl px-1 py-1 text-xs hover:bg-elev">
                   <span className={`rounded-md px-1.5 font-display text-[10px] font-extrabold ${t.priority === 'P0' ? 'bg-p0/20 text-p0' : t.priority === 'P1' ? 'bg-p1/20 text-p1' : 'bg-elev text-fg2'}`}>{t.priority}</span>
                   <span className="font-mono text-muted">{t.ref}</span>
-                  <span className="min-w-0 flex-1 truncate font-bold">{t.title || '(sem título)'}</span>
+                  <span className="min-w-0 flex-1 truncate font-bold">{t.apelido || t.title || '(sem título)'}</span>
                   <span className="text-muted">{t.status}</span>
                 </Link>
               ))}

@@ -56,6 +56,10 @@ três colunas fixas que rolam por coluna, sem sair da tela:
 - **/tickets** — `Hoje` (resumo da manhã, quatro números, quem sumiu) · lista de
   tickets com busca e chips · o ticket selecionado (`?t=id`) com resposta,
   histórico e contexto. `/t/[id]` só redireciona pra cá (links antigos valem).
+  **Apelido**: no cabeçalho do ticket, "🏷️ dar um apelido" (até 60 letras,
+  coluna `support.tickets.apelido`, migration 092). O apelido vira o nome do
+  ticket na fila (título original embaixo), entra na busca e aparece nos
+  tickets do aluno; cada troca fica no histórico.
 - **/alunos** — os três relatórios da base (`De onde vêm`, `Frequência`, `Uso`) ·
   lista com busca (`?q=`) e filtros (`?f=sumiram|habito|nunca|beta|premium`) ·
   os mesmos três relatórios só do aluno selecionado (`?u=id`), com calendário de

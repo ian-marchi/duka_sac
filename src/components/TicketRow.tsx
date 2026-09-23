@@ -23,7 +23,7 @@ export function TicketRow({ t }: { t: Ticket }) {
           {t.was_premium && <span className="text-xs" title="usuário premium">⭐</span>}
         </div>
         <div className="mt-0.5 truncate text-sm font-medium">
-          {t.title || t.message || '(sem título)'}
+          {t.apelido || t.title || t.message || '(sem título)'}
         </div>
         <div className="mt-0.5 truncate text-xs text-muted">
           {grouped ? (

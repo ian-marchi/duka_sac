@@ -28,6 +28,7 @@ export type Ticket = {
   affected_users: number
   duplicate_of: number | null
   title: string
+  apelido: string | null   // nome curto dado no painel (092)
   message: string
   user_id: string | null
   reporter_name: string | null
