@@ -53,6 +53,14 @@ O painel tem a cara do app (Baloo 2 + Nunito, roxo `#AC53D5`, botões clay) e um
 trilho de ícones de 68px no lugar da barra lateral. Duas telas são "mesas" de
 três colunas fixas que rolam por coluna, sem sair da tela:
 
+- **/** (visão geral) — dashboard: filtro fixo (Diário, 7d, 14d, 30d, 90d ou
+  intervalo `?de=&ate=`, contas de teste, "ao vivo" a cada minuto); "Quando os
+  usuários entram" (hoje / semana / mês / intervalo, com variação e minigráfico);
+  linha do tempo (Entraram / Aberturas / Cadastros × Dia / Semana / Mês, período
+  anterior tracejado, arrastar para somar um trecho e filtrar o painel); top 5 do
+  ranking; mapa de calor das últimas 16 semanas; últimos tickets; e a análise de
+  sempre (KPIs, funil, grupos, rotina, tabela, perfil, achados). Gráficos em SVG
+  próprio (`src/components/dash/`, `src/lib/serieTempo.ts`), sem biblioteca.
 - **/tickets** — `Hoje` (resumo da manhã, quatro números, quem sumiu) · lista de
   tickets com busca e chips · o ticket selecionado (`?t=id`) com resposta,
   histórico e contexto. `/t/[id]` só redireciona pra cá (links antigos valem).

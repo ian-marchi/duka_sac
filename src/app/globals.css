@@ -84,3 +84,38 @@ html, body {
     border-bottom-width: 3px;
   }
 }
+
+/*
+  Animações da visão geral (dashboard). Leves e só na entrada: barras crescem,
+  linhas se revelam da esquerda, cartões sobem. `--d` = atraso escalonado.
+*/
+@keyframes dk-grow-x { from { width: 0; } }
+@keyframes dk-grow-y { from { height: 0; } }
+@keyframes dk-rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes dk-reveal { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes dk-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes dk-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dk-pop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+@keyframes dk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+.dk-grow-y { animation: dk-grow-y .8s cubic-bezier(.2, .8, .2, 1) both; animation-delay: var(--d, 0ms); }
+.dk-grow-x { animation: dk-grow-x .9s cubic-bezier(.2, .8, .2, 1) both; animation-delay: var(--d, 0ms); }
+.dk-rise { transform-box: fill-box; transform-origin: bottom; animation: dk-rise .7s cubic-bezier(.2, .8, .2, 1) both; animation-delay: var(--d, 0ms); }
+.dk-reveal { transform-box: fill-box; transform-origin: left; animation: dk-reveal 1.1s cubic-bezier(.3, .7, .2, 1) both; }
+.dk-fade-up { animation: dk-fade-up .55s ease-out both; animation-delay: var(--d, 0ms); }
+.dk-fade { animation: dk-fade .6s ease-out both; animation-delay: var(--d, 0ms); }
+.dk-pop { transform-box: fill-box; transform-origin: center; animation: dk-pop .45s cubic-bezier(.2, .9, .3, 1.3) both; animation-delay: var(--d, 0ms); }
+.dk-pulse { animation: dk-pulse 1.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-grow-x, .dk-grow-y, .dk-rise, .dk-reveal, .dk-fade-up, .dk-fade, .dk-pop, .dk-pulse { animation: none; }
+}
+
+@layer components {
+  /* bloco do dashboard: cartão com borda que acende no hover (estilo Power BI) */
+  .dk-tile { @apply rounded-2xl border bg-surface p-4 transition-colors duration-300 hover:border-brand/40; }
+  .dk-h { @apply font-display text-sm font-bold leading-tight; }
+  .dk-seg { @apply inline-flex rounded-xl border bg-bg p-0.5 text-[11px] font-bold; }
+  .dk-seg > button { @apply rounded-lg px-2.5 py-1 text-muted transition hover:text-fg; }
+  .dk-seg > button[data-on="1"] { @apply bg-elev text-fg shadow-sm; }
+}
