@@ -56,3 +56,7 @@ jarvis-voice/.venv/
 # duka_sac é PÚBLICO — se virar privado, pode tirar estas duas linhas.
 .claude/
 CLAUDE.md
+
+# anotações locais (prompts com nomes e telefones)
+data/*.md
+!data/README.md
