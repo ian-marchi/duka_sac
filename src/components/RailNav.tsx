@@ -15,6 +15,8 @@ const ITENS: { href: string; label: string; icon: React.ReactNode; match: (p: st
     icon: <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12l2-7h14l2 7v7H3z"/><path d="M3 12h5l1.5 3h5L16 12h5"/></svg> },
   { href: '/alunos',     label: 'Alunos', match: (p) => p.startsWith('/alunos'),
     icon: <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.5a5 5 0 0 1 6 5"/></svg> },
+  { href: '/whatsapp',   label: 'WhatsApp (quem chegou pelo WhatsApp)', match: (p) => p.startsWith('/whatsapp'),
+    icon: <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20l1.3-3.9A8 8 0 1 1 8.2 19z"/><path d="M9 9.5c.3 2.6 2.4 4.7 5 5l1.2-1.2-1.8-1.2-1 .6a3.4 3.4 0 0 1-1.6-1.6l.6-1L10.2 8.3z"/></svg> },
   { href: '/relatorios', label: 'Relatórios', match: (p) => p.startsWith('/relatorios'),
     icon: <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg> },
   { href: '/metricas',   label: 'Métricas', match: (p) => p.startsWith('/metricas'),

@@ -3,8 +3,7 @@ import type { Pessoa } from '@/lib/analytics'
 import { GRUPO_META, DIA_NOME, diffDays } from '@/lib/analytics'
 import type { RelatoriosBase, AlunoDetalhe, Item } from '@/lib/alunosAnalise'
 import { compactNumber, fullNumber } from '@/lib/format'
-import { escolaCurta, type ResumoAlunos, type ScanRun } from '@/lib/alunos'
-import { ScanAlunos } from '@/components/ScanAlunos'
+import { escolaCurta, type ResumoAlunos } from '@/lib/alunos'
 
 /* ── peças ─────────────────────────────────────────────────────────────────── */
 
@@ -48,12 +47,10 @@ const br1 = (n: number) => n.toFixed(1).replace('.', ',')
 
 /* ── coluna 1: os três relatórios da base ──────────────────────────────────── */
 
-export function RelatoriosColuna({ r, total, days, hoje, ws, scan }: {
-  r: RelatoriosBase; total: number; days: number; hoje: string
-  ws: ResumoAlunos; scan: { ultimo: ScanRun | null; aberto: ScanRun | null }
+export function RelatoriosColuna({ r, total, days, hoje, ws }: {
+  r: RelatoriosBase; total: number; days: number; hoje: string; ws: ResumoAlunos
 }) {
   const maxSem = Math.max(1, ...r.frequencia.semana.map((s) => s.v))
-  const maxEsc = Math.max(1, ...ws.porEscola.map((e) => e.total))
   return (
     <div className="flex h-full flex-col gap-2.5 overflow-auto border-r bg-surface/40 px-3 py-3.5">
       <div className="flex items-center gap-2">
@@ -62,26 +59,9 @@ export function RelatoriosColuna({ r, total, days, hoje, ws, scan }: {
         <span className="ml-auto text-[11px] text-muted">até {hoje.split('-').reverse().join('/')}</span>
       </div>
 
-      <Card icon="💬" title="WhatsApp por escola" tag="scan">
-        <ScanAlunos ultimo={scan.ultimo} aberto={scan.aberto} atualizadoEm={ws.atualizadoEm} total={ws.total} />
-        <div className="mt-2.5 space-y-1.5">
-          {ws.porEscola.length === 0 && <p className="text-xs text-muted">Nenhum aluno do WhatsApp ainda. Peça um scan.</p>}
-          {ws.porEscola.map((e) => (
-            <Link key={e.slug} href={`/alunos?f=escola:${e.slug}`} scroll={false} className="block" title={e.escola}>
-              <div className="grid grid-cols-[100px_1fr_auto] items-center gap-2 text-[11px]">
-                <span className="truncate font-bold text-fg">{e.curto}</span>
-                <div className="h-2.5 overflow-hidden rounded-full bg-border">
-                  <div className="h-full rounded-full bg-brand" style={{ width: `${(e.total / maxEsc) * 100}%` }}>
-                    <div className="h-full rounded-full bg-ok" style={{ width: `${e.total ? (e.comConta / e.total) * 100 : 0}%` }} />
-                  </div>
-                </div>
-                <span className="whitespace-nowrap text-fg2"><b className="text-fg">{e.total}</b> · {e.comConta} no app</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-        <div className="kicker mt-2">barra roxa = entraram pelo WhatsApp · verde = já têm conta no app · {ws.professores} professor(es)</div>
-      </Card>
+      <Link href="/whatsapp" className="chip self-start" title="Quem chegou pelo WhatsApp, por escola — aba própria">
+        💬 WhatsApp: {ws.total} abordados · {ws.comConta} já no app →
+      </Link>
 
       <Card icon="📍" title="De onde vêm" tag="origem">
         <Bars itens={r.origem.escolas} />

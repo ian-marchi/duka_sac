@@ -88,11 +88,12 @@ mesmo bot da Lumi que cadastra os beta testers. Com `SUPABASE_URL` e `SUPABASE_S
 `.env` dele, ele passa a esvaziar a fila (1 mensagem a cada 5 s, máximo 40 por hora) e avisa o admin
 quando um aluno responde. `npm run whatsapp` aqui só chama o `npm start` de lá.
 
-## Scan dos alunos do WhatsApp (por escola)
+## Aba WhatsApp: quem chegou pelo WhatsApp (por escola)
 
-A mesa `/alunos` mostra, no primeiro card, **quantos alunos entraram pelo WhatsApp
-de cada escola** e quantos deles já têm conta no app. Os balões de filtro da lista
-são as escolas (nome curto: *Escola Normal* = E.E. Prof. Plínio Ribeiro,
+A aba **`/whatsapp`** é a métrica separada de quem foi abordado pelo WhatsApp:
+quantos responderam, quantos já têm conta no app, por escola e por ano, com a
+lista completa (busca e filtros). O botão de scan e o download do CSV moram
+lá. Em `/alunos` (as contas do app) os balões de filtro da lista são as escolas (nome curto: *Escola Normal* = E.E. Prof. Plínio Ribeiro,
 *Polivalente* = E.E. Prof. Alcides de Carvalho, *Atenas*; escola nova ganha balão sozinha — apelidos em
 `ESCOLAS`, `src/lib/alunos.ts`).
 
