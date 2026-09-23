@@ -93,7 +93,7 @@ quando um aluno responde. `npm run whatsapp` aqui só chama o `npm start` de lá
 A mesa `/alunos` mostra, no primeiro card, **quantos alunos entraram pelo WhatsApp
 de cada escola** e quantos deles já têm conta no app. Os balões de filtro da lista
 são as escolas (nome curto: *Escola Normal* = E.E. Prof. Plínio Ribeiro,
-*Polivalente*, *Atenas*; escola nova ganha balão sozinha — apelidos em
+*Polivalente* = E.E. Prof. Alcides de Carvalho, *Atenas*; escola nova ganha balão sozinha — apelidos em
 `ESCOLAS`, `src/lib/alunos.ts`).
 
 A fonte é o banco: `support.alunos_whatsapp` (uma linha por número) e

@@ -101,7 +101,7 @@ export const semAcento = (s: string) =>
  */
 export const ESCOLAS: { casa: RegExp; nome: string; curto: string }[] = [
   { casa: /plinio|normal/,   nome: 'E.E. Prof. Plínio Ribeiro', curto: 'Escola Normal' },
-  { casa: /polivalente/,     nome: 'E.E. Polivalente',          curto: 'Polivalente' },
+  { casa: /alcides|polivalente/, nome: 'E.E. Prof. Alcides de Carvalho', curto: 'Polivalente' },
   { casa: /atenas/,          nome: 'Colégio Atenas',            curto: 'Atenas' },
 ]
 

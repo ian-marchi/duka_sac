@@ -23,7 +23,7 @@ OVERRIDES_PADRAO = RAIZ / "data" / "escola_overrides.csv"
 
 ANO = {"em1": "1º ano", "em2": "2º ano", "em3": "3º ano", "cursinho": "Cursinho", "formado": "Formado", "fundamental": "Fundamental"}
 TIPO_ESCOLA = {"publica": "Pública", "particular": "Particular"}
-TIPO_DA_ESCOLA = {"E.E. Prof. Plínio Ribeiro": "publica", "Colégio Atenas": "particular"}
+TIPO_DA_ESCOLA = {"E.E. Prof. Plínio Ribeiro": "publica", "E.E. Prof. Alcides de Carvalho": "publica", "Colégio Atenas": "particular"}
 PARTICULAS = {"de", "da", "do", "dos", "das", "e"}
 
 def norm(s):
@@ -46,7 +46,7 @@ def ler_planilha(caminho=CSV_PADRAO):
         for r in csv.DictReader(fh):
             nome = (r.get("Nome") or "").strip()
             esc = norm(r.get("Escola") or "")
-            escola = ("E.E. Prof. Plínio Ribeiro" if ("plinio" in esc or "normal" in esc) else "Colégio Atenas" if "atenas" in esc else ("Outra" if esc else "")) if nome else ""
+            escola = ("E.E. Prof. Plínio Ribeiro" if ("plinio" in esc or "normal" in esc) else "E.E. Prof. Alcides de Carvalho" if ("alcides" in esc or "polivalente" in esc) else "Colégio Atenas" if "atenas" in esc else ("Outra" if esc else "")) if nome else ""
             ano_b = norm(r.get("Ano") or ""); obs = r.get("Observação") or ""
             if "professor" in ano_b or "professor" in norm(obs): ano = "Professor(a)"
             elif re.search(r"\b1\b|primeiro|1º|1°|1-", ano_b): ano = "1º ano"
