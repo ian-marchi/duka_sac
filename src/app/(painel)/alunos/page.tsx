@@ -1,7 +1,7 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import type { AppUser, AppOpen, AiUsageRow } from '@/lib/types'
 import { analisar, addDays, hojeSP, diffDays } from '@/lib/analytics'
-import { carregarAlunos, alunosDeLinhas, resumirAlunos, semAcento, type LinhaScan, type ScanRun } from '@/lib/alunos'
+import { carregarAlunos, alunosDeLinhas, resumirAlunos, semAcento, type LinhaScan, type ScanRun, type ContatoWs } from '@/lib/alunos'
 import { relatoriosBase, detalheAluno, type SimRow, type EssayRow, type TicketLite } from '@/lib/alunosAnalise'
 import { RelatoriosColuna, AlunosLista, AlunoDetalheView } from '@/components/AlunosWorkbench'
 
@@ -21,8 +21,8 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   const days = 14
   const since = addDays(hoje, -days)
 
-  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: scanRuns }] = await Promise.all([
-    pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at').limit(5000),
+  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: scanRuns }, { data: contatos }] = await Promise.all([
+    pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at, phone').limit(5000),
     pub.from('app_opens').select('user_id, dia, aberturas').limit(50000),
     pub.from('ai_usage').select('user_id, feature, total_tokens, ok, cost_usd, created_at').gte('created_at', `${since}T00:00:00Z`).limit(50000),
     pub.from('simulations').select('user_id, total_questions, correct_answers, status, started_at').limit(20000),
@@ -31,6 +31,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     // planilha do WhatsApp (migration 089): o que o scan gravou
     supabase.from('alunos_whatsapp').select('telefone, contato, nome, telefone_informado, escola_bruta, ano_bruto, status, observacao, cadastrado_no_bot, registrado_no_app, ultima_msg, atualizado_em').limit(10000),
     supabase.from('alunos_scan_runs').select('id, origem, status, solicitado_em, iniciado_em, concluido_em, total, erro').order('id', { ascending: false }).limit(5),
+    supabase.from('contatos_whatsapp').select('user_id, telefone, escola, ano, como').limit(5000),
   ])
   if (uErr) {
     return <div className="p-6 text-sm text-muted">Não consegui ler <code>public.users</code>: {uErr.message}</div>
@@ -40,7 +41,12 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   const a = analisar((users ?? []) as unknown as AppUser[], (opens ?? []) as unknown as AppOpen[], (usage ?? []) as unknown as AiUsageRow[], { days, hoje, hideEmails: hideList })
   // Banco primeiro; se o scan nunca rodou, o CSV manual segura a tela.
   const linhas = (scanLinhas ?? []) as LinhaScan[]
-  const ws = resumirAlunos(linhas.length ? { ...alunosDeLinhas(linhas), arquivo: 'support.alunos_whatsapp' } : carregarAlunos(), a.pessoas)
+  const telefones = new Map((users ?? []).map((u) => [String((u as { id: string }).id), ((u as { phone?: string | null }).phone ?? null)]))
+  const ws = resumirAlunos(
+    linhas.length ? { ...alunosDeLinhas(linhas), arquivo: 'support.alunos_whatsapp' } : carregarAlunos(),
+    a.pessoas,
+    { contatos: (contatos ?? []) as ContatoWs[], telefones },
+  )
   const runs = (scanRuns ?? []) as ScanRun[]
   const scan = { ultimo: runs[0] ?? null, aberto: runs.find((r) => r.status === 'solicitado' || r.status === 'rodando') ?? null }
   const simsR = (sims ?? []) as SimRow[]
@@ -51,7 +57,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
 
   const base = relatoriosBase(a, opensR, usageR, simsR, essR, ws)
   const wsPorConta = new Map(ws.alunos.filter((al) => al.conta).map((al) => [al.conta!.id, al]))
-  const escolaDe = (id: string) => wsPorConta.get(id)?.escola ?? null
+  const escolaDe = (id: string) => ws.contas[id]?.escola ?? wsPorConta.get(id)?.escola ?? null
 
   // filtro + busca
   const nq = semAcento(q)
@@ -61,7 +67,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     if (f === 'nunca') return p.grupo === 'nunca'
     if (f.startsWith('escola:')) {
       const e = ws.porEscola.find((x) => x.slug === f.slice(7))
-      return !!e && wsPorConta.get(p.id)?.escola === e.escola
+      return !!e && escolaDe(p.id) === e.escola
     }
     return true
   })

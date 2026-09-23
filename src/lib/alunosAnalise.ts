@@ -73,14 +73,14 @@ export function relatoriosBase(
   for (const al of ws.alunos) if (al.conta) wsPorConta.set(al.conta.id, al)
 
   // origem
-  const escolas = conta(a.pessoas, (p) => wsPorConta.get(p.id)?.escola ?? 'Sem planilha')
+  const escolas = conta(a.pessoas, (p) => ws.contas[p.id]?.escola ?? wsPorConta.get(p.id)?.escola ?? 'Sem escola identificada')
   const tipoEscola = [
     { label: 'Pública', value: a.perfil.publica }, { label: 'Particular', value: a.perfil.particular },
     { label: 'Não informou', value: a.total - a.perfil.publica - a.perfil.particular },
   ].filter((x) => x.value > 0)
   const canal = [
-    { label: 'WhatsApp beta (planilha)', value: a.pessoas.filter((p) => wsPorConta.has(p.id)).length },
-    { label: 'Outro caminho', value: a.pessoas.filter((p) => !wsPorConta.has(p.id)).length },
+    { label: 'WhatsApp (planilha)', value: a.pessoas.filter((p) => ws.contas[p.id] || wsPorConta.has(p.id)).length },
+    { label: 'Outro caminho', value: a.pessoas.filter((p) => !ws.contas[p.id] && !wsPorConta.has(p.id)).length },
   ]
 
   // frequência

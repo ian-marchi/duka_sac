@@ -54,6 +54,25 @@ export type ResumoAlunos = {
   anos: { label: string; value: number }[]
   avisos: { tipo: string; itens: { nome: string; contato: string; obs: string }[] }[]
   duplicatas: Aluno[]
+  /** Escola/ano de cada conta do app que conseguimos ligar à planilha (por qualquer ponte). */
+  contas: Record<string, { escola: string; ano: string; como: string }>
+}
+
+/** Linha de support.contatos_whatsapp: ponte conta ↔ telefone feita pelo cruzamento em camadas (scripts/duka_contatos.py). */
+export type ContatoWs = { user_id: string; telefone: string; escola: string | null; ano: string | null; como: string | null }
+
+/**
+ * Forma canônica de um celular brasileiro: 55 + DDD + 9 + 8 dígitos.
+ * O WhatsApp mostra números antigos sem o nono dígito ("+55 38 8848-9549") e o
+ * aluno digita com ("38 98848-9549") — sem canonizar, os dois nunca casam.
+ */
+export function telefoneNorm(s: string | null | undefined): string {
+  let d = String(s ?? '').replace(/[^0-9]/g, '')
+  if (!d) return ''
+  d = d.replace(/^0+/, '')
+  if ((d.length === 10 || d.length === 11) && !d.startsWith('55')) d = `55${d}`
+  if (d.length === 12 && d.charAt(4) >= '6' && d.charAt(4) <= '9') d = `${d.slice(0, 4)}9${d.slice(4)}`
+  return d
 }
 
 export const STATUS_META: Record<StatusAluno, { label: string; cor: string }> = {
@@ -231,15 +250,51 @@ export function alunosParaCsv(alunos: Aluno[]): string {
 }
 
 // ── resumo + cruzamento com as contas do app ────────────────────────────────
-export function resumirAlunos(base: { alunos: Aluno[]; atualizadoEm: string | null; arquivo?: string }, pessoas: Pessoa[]): ResumoAlunos {
+/**
+ * Liga cada linha da planilha a uma conta do app, nesta ordem de confiança:
+ *   1. `support.contatos_whatsapp` (cruzamento em camadas feito pelo script, inclui os manuais)
+ *   2. telefone do cadastro do app (`users.phone`) igual ao número do WhatsApp
+ *   3. nome completo igual (sem acento)
+ * `users` não guarda escola — a planilha do WhatsApp é a única fonte, por isso
+ * o esforço em achar a ponte. Quem não casa por nenhuma fica "Sem escola identificada".
+ */
+export function resumirAlunos(
+  base: { alunos: Aluno[]; atualizadoEm: string | null; arquivo?: string },
+  pessoas: Pessoa[],
+  pontes: { contatos?: ContatoWs[]; telefones?: Map<string, string | null> } = {},
+): ResumoAlunos {
+  const porId = new Map(pessoas.map((p) => [p.id, p]))
   const porNome = new Map<string, Pessoa>()
   for (const p of pessoas) {
     const n = semAcento(p.nome ?? '')
     if (n && !porNome.has(n)) porNome.set(n, p)
   }
-  const alunos = base.alunos.map((a) => {
-    const n = semAcento(a.nome)
-    const p = n ? porNome.get(n) : undefined
+  const porTelefone = new Map<string, number>()   // telefone → índice em base.alunos
+  base.alunos.forEach((a, i) => {
+    for (const t of [telefoneNorm(a.contato), telefoneNorm(a.telefone)]) if (t && !porTelefone.has(t)) porTelefone.set(t, i)
+  })
+  const contaDe = new Map<number, Pessoa>()      // índice → conta
+  const usada = new Set<string>()
+  const liga = (i: number | undefined, p: Pessoa | undefined) => {
+    if (i === undefined || !p || contaDe.has(i) || usada.has(p.id)) return
+    contaDe.set(i, p); usada.add(p.id)
+  }
+  const contas: ResumoAlunos['contas'] = {}
+  // 1. contatos_whatsapp
+  for (const c of pontes.contatos ?? []) {
+    const p = porId.get(c.user_id)
+    if (!p) continue
+    liga(porTelefone.get(telefoneNorm(c.telefone)), p)
+    if (c.escola) contas[p.id] = { escola: escolaDe(c.escola), ano: c.ano ?? 'Não informado', como: c.como ?? 'planilha' }
+  }
+  // 2. telefone do cadastro
+  for (const p of pessoas) liga(porTelefone.get(telefoneNorm(pontes.telefones?.get(p.id))), p)
+  // 3. nome igual
+  base.alunos.forEach((a, i) => { const n = semAcento(a.nome); if (n) liga(i, porNome.get(n)) })
+
+  const alunos = base.alunos.map((a, i) => {
+    const p = contaDe.get(i)
+    if (p && !contas[p.id]) contas[p.id] = { escola: a.escola, ano: a.ano, como: 'planilha' }
     return { ...a, conta: p ? { id: p.id, nome: p.nome, grupo: p.grupo, criado: p.criado } : null }
   })
 
@@ -289,12 +344,13 @@ export function resumirAlunos(base: { alunos: Aluno[]; atualizadoEm: string | nu
         slug: escolaSlug(escola),
         total: conta((a) => a.escola === escola && !!a.nome),
         responderam: conta((a) => a.escola === escola && a.status === 'respondeu'),
-        comConta: conta((a) => a.escola === escola && !!a.conta),
+        comConta: Object.values(contas).filter((c) => c.escola === escola).length,
         professores: conta((a) => a.escola === escola && a.professor),
       }))
       .sort((x, y) => y.total - x.total),
     anos: agrupa((a) => a.ano, (a) => a.status === 'respondeu'),
     avisos,
     duplicatas: alunos.filter((a) => semAcento(a.obs).includes('duplicata')),
+    contas,
   }
 }
