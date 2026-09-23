@@ -111,6 +111,15 @@ O botão **Escanear agora** só registra o pedido (`support.solicitar_scan_aluno
 quem executa é quem está com o WhatsApp Web aberto. **Baixar CSV** entrega a
 planilha atual (`/api/alunos/planilha`, só admin logado).
 
+## Aba Ranking: pontos dos alunos com filtros
+
+`/ranking` ordena as contas por `users.total_points` (só existe o total acumulado;
+o app não guarda pontos por dia). Filtros combináveis pela URL: escola, ano, por
+onde chegou (WhatsApp / contato direto / outro), grupo de frequência e "só quem
+abriu nos últimos 14 dias", mais busca. A coluna da esquerda mostra pódio, soma,
+média e mediana do recorte e pontos somados por escola e por ano. "ver" abre o
+mesmo pop-up de perfil da aba WhatsApp.
+
 ## Deploy no Railway (projeto `duka-sac`)
 
 Repositório: `ian-marchi/duka_sac` (branch `main`). O `railway.json` já diz build
