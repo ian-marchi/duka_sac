@@ -14,7 +14,6 @@ export type PerfilResumo = {
   diasAt: number
   ab: number
   pontos: number
-  premium: boolean
   grupoTag: string
   grupoCor: string
   exame: string | null
@@ -56,7 +55,6 @@ export function PerfilPopup({ p, rotulo = 'sim' }: { p: PerfilResumo; rotulo?: s
             <div className="flex items-start gap-3">
               <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand font-display text-xl font-bold text-white">
                 {p.nome.trim().charAt(0).toUpperCase()}
-                {p.premium && <span className="absolute -right-2 -top-3 rotate-[20deg] text-lg">👑</span>}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate font-display text-lg font-extrabold">{p.nome}</div>
@@ -75,7 +73,6 @@ export function PerfilPopup({ p, rotulo = 'sim' }: { p: PerfilResumo; rotulo?: s
             <dl className="mt-4 grid grid-cols-[110px_1fr] gap-x-3 gap-y-1.5 text-xs">
               <dt className="kicker">Conta desde</dt><dd>{dt(p.criado)}</dd>
               <dt className="kicker">Última abertura</dt><dd>{p.ultAb ? dt(p.ultAb) : 'nunca abriu'}</dd>
-              <dt className="kicker">Plano</dt><dd>{p.premium ? '👑 Premium' : 'Free'}</dd>
               <dt className="kicker">Vestibular</dt><dd>{p.exame ?? '—'}{p.curso ? ` · ${p.curso}` : ''}</dd>
               <dt className="kicker">Idade</dt><dd>{p.idade ?? '—'}{p.tipoEscola ? ` · escola ${p.tipoEscola}` : ''}</dd>
               <dt className="kicker">IA (14d)</dt><dd>{p.ia} chamadas</dd>

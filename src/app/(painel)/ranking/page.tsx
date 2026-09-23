@@ -58,7 +58,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Prom
     const canal = c ? c.canal : wsPorConta.has(p.id) ? 'whatsapp' : 'outro'
     return {
       id: p.id, nome: p.nome, user: p.user, pontos: p.pontos, ofensiva: u?.current_streak ?? 0, maiorOfensiva: u?.longest_streak ?? 0,
-      diasAt: p.diasAt, ultAb: p.ultAb, grupo: p.grupo, premium: p.premium,
+      diasAt: p.diasAt, ultAb: p.ultAb, grupo: p.grupo,
       escola, escolaCurta: escolaCurta(escola), escolaSlug: escolaSlug(escola), ano, canal, canalLabel: CANAL_LABEL[canal as keyof typeof CANAL_LABEL] ?? 'Outro caminho',
     }
   }).sort((x, y) => y.pontos - x.pontos || y.diasAt - x.diasAt)
@@ -80,7 +80,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Prom
     const c = ws.contas[p.id]; const al = wsPorConta.get(p.id)
     perfis[p.id] = {
       id: p.id, nome: p.nome, user: p.user, email: p.email, criado: p.criado, ultAb: p.ultAb, diasAt: p.diasAt, ab: p.ab,
-      pontos: p.pontos, premium: p.premium, grupoTag: GRUPO_META[p.grupo].tag, grupoCor: GRUPO_META[p.grupo].cor,
+      pontos: p.pontos, grupoTag: GRUPO_META[p.grupo].tag, grupoCor: GRUPO_META[p.grupo].cor,
       exame: p.exame, curso: p.curso, idade: p.idade, tipoEscola: p.escola === 'publica' ? 'pública' : p.escola === 'particular' ? 'particular' : null, ia: p.ia,
       escola: c?.escola ?? al?.escola ?? null, ano: c?.ano ?? al?.ano ?? null, canal: c ? CANAL_LABEL[c.canal] : al ? 'WhatsApp' : null, cidade: c?.cidade ?? null,
       contato: al?.contato ?? null, obs: al?.obs || null,

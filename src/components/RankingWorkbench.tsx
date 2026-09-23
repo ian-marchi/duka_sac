@@ -4,7 +4,7 @@ import { PerfilPopup, type PerfilResumo } from '@/components/PerfilPopup'
 
 export type Linha = {
   id: string; nome: string; user: string | null; pontos: number; ofensiva: number; maiorOfensiva: number
-  diasAt: number; ultAb: string | null; grupo: Grupo; premium: boolean
+  diasAt: number; ultAb: string | null; grupo: Grupo
   escola: string; escolaCurta: string; escolaSlug: string; ano: string; canal: string; canalLabel: string
   posicao?: number
 }
@@ -39,7 +39,6 @@ function Bars({ itens, max }: { itens: { label: string; value: number; sub?: str
 const Avatar = ({ l, size = 28 }: { l: Linha; size?: number }) => (
   <span className="relative flex shrink-0 items-center justify-center rounded-full bg-brand font-display font-bold text-white" style={{ width: size, height: size, fontSize: size * 0.4 }}>
     {l.nome.trim().charAt(0).toUpperCase()}
-    {l.premium && <span className="absolute rotate-[20deg]" style={{ top: -size * 0.3, right: -size * 0.22, fontSize: size * 0.4 }}>👑</span>}
   </span>
 )
 

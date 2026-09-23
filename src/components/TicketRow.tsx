@@ -20,7 +20,6 @@ export function TicketRow({ t }: { t: Ticket }) {
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs text-muted">{t.ref}</span>
           <KindBadge kind={t.kind} />
-          {t.was_premium && <span className="text-xs" title="usuário premium">⭐</span>}
         </div>
         <div className="mt-0.5 truncate text-sm font-medium">
           {t.apelido || t.title || t.message || '(sem título)'}

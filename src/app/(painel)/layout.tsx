@@ -37,7 +37,6 @@ export default async function PainelLayout({ children }: { children: React.React
               aria-label="Sair"
             >
               {inicial}
-              <span className="absolute -right-1.5 -top-2 rotate-[20deg] text-[11px]" aria-hidden>👑</span>
             </button>
           </form>
         </div>

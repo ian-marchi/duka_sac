@@ -38,13 +38,12 @@ export async function TicketDetalhe({ id }: { id: number }) {
   ])
   const { data: profile } = t.user_id
     ? await supabase.schema('public').from('users')
-        .select('full_name, username, premium_status, premium_until, total_points, current_streak, created_at')
+        .select('full_name, username, total_points, current_streak, created_at')
         .eq('id', t.user_id).single()
     : { data: null }
 
   const meta = KIND_META[t.kind]
   const others = (related?.data ?? []) as { id: number; ref: string; apelido: string | null }[]
-  const premium = profile && (profile.premium_status === 'premium' || profile.premium_status === 'trial')
 
   return (
     <div className="flex h-full flex-col">
@@ -100,7 +99,6 @@ export async function TicketDetalhe({ id }: { id: number }) {
             <div className="flex items-center gap-2">
               <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-brand font-display text-xs font-bold text-white">
                 {(t.reporter_name ?? profile?.full_name ?? 'A').trim().charAt(0).toUpperCase()}
-                {premium && <span className="absolute -right-1.5 -top-2 rotate-[20deg] text-[11px]">👑</span>}
               </span>
               <div className="min-w-0">
                 <div className="truncate text-sm font-bold">{t.reporter_name ?? profile?.full_name ?? 'anônimo'}</div>
@@ -109,7 +107,6 @@ export async function TicketDetalhe({ id }: { id: number }) {
             </div>
             {profile && (
               <div className="mt-2 space-y-0.5 text-xs text-muted">
-                <div>{premium ? `👑 ${profile.premium_status}` : 'free'}{profile.premium_until ? ` até ${fullDate(profile.premium_until)}` : ''}</div>
                 <div>{profile.total_points ?? 0} pts · ofensiva {profile.current_streak ?? 0}</div>
                 <div>conta criada {profile.created_at ? timeAgo(profile.created_at) : '—'}</div>
                 {t.user_id && <Link href={`/alunos?u=${t.user_id}`} className="text-brandText underline">ver o aluno →</Link>}

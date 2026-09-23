@@ -47,7 +47,7 @@ export function PeopleTable({ pessoas, hoje }: { pessoas: Pessoa[]; hoje: string
     return (
       <tr key={p.id} className="border-b align-middle hover:bg-bg/60">
         <td className="py-2.5 pr-3">
-          <div className="text-sm font-medium">{p.nome}{p.premium ? ' ⭐' : ''}</div>
+          <div className="text-sm font-medium">{p.nome}</div>
           <div className="text-xs text-muted">{p.user ? `@${p.user}` : 'sem username'}{p.curso ? ` · ${p.curso.split(',')[0].trim()}` : ''}</div>
         </td>
         <td className="py-2.5 pr-3">

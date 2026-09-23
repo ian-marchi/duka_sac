@@ -85,7 +85,6 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
                 <Link key={p.id} href={`/alunos?u=${p.id}`} className="flex items-center gap-2 rounded-xl px-1 py-0.5 hover:bg-elev">
                   <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-brand font-display text-[11px] font-bold text-white">
                     {p.nome.trim().charAt(0).toUpperCase()}
-                    {p.premium && <span className="absolute -right-1.5 -top-2 rotate-[20deg] text-[10px]">👑</span>}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-bold">{p.nome}</span>

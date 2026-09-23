@@ -111,7 +111,6 @@ export function FilaLista({ selected }: { selected: number | null }) {
                   {grouped ? ` · ${pluralPessoas(t.affected_users)}` : t.platform ? ` · ${deviceLine(t) || t.platform}` : ''}
                   {t.app_version ? ` · v${t.app_version}` : ''}
                   {' · '}{timeAgo(t.last_seen_at)}
-                  {t.was_premium && ' · 👑'}
                 </div>
               </div>
             </Link>

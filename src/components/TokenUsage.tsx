@@ -124,8 +124,6 @@ export async function TokenUsage() {
                         <div className="font-medium">{u.username || u.email || u.user_id.slice(0, 8)}</div>
                         <div className="text-xs text-muted">
                           {u.email}
-                          {u.premium_status === 'premium' || u.premium_status === 'trial'
-                            ? ` · ⭐ ${u.premium_status}` : ''}
                         </div>
                       </td>
                       <td className="p-1.5 text-right">

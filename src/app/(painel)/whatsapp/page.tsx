@@ -53,7 +53,7 @@ export default async function WhatsappPage({ searchParams }: { searchParams: Pro
     const c = ws.contas[p.id]
     perfis[p.id] = {
       id: p.id, nome: p.nome, user: p.user, email: p.email, criado: p.criado, ultAb: p.ultAb, diasAt: p.diasAt, ab: p.ab,
-      pontos: p.pontos, premium: p.premium, grupoTag: GRUPO_META[p.grupo].tag, grupoCor: GRUPO_META[p.grupo].cor,
+      pontos: p.pontos, grupoTag: GRUPO_META[p.grupo].tag, grupoCor: GRUPO_META[p.grupo].cor,
       exame: p.exame, curso: p.curso, idade: p.idade, tipoEscola: p.escola === 'publica' ? 'pública' : p.escola === 'particular' ? 'particular' : null, ia: p.ia,
       escola: c?.escola ?? al.escola, ano: c?.ano ?? al.ano, canal: c ? CANAL_LABEL[c.canal] : 'WhatsApp', cidade: c?.cidade ?? null,
       contato: al.contato, obs: al.obs || null,

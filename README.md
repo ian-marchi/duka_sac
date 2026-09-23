@@ -145,6 +145,13 @@ abriu nos últimos 14 dias", mais busca. A coluna da esquerda mostra pódio, som
 média e mediana do recorte e pontos somados por escola e por ano. "ver" abre o
 mesmo pop-up de perfil da aba WhatsApp.
 
+## Premium não aparece no painel
+
+Decisão do Ian (2026-09-23): o painel não mostra plano, coroa nem "premium até"
+em lugar nenhum — o tema confundia. Todo mundo do beta é premium até 31/03/2027
+(migration 097 do app) e os gates estão desligados. Se um dia precisar, a
+coluna `users.premium_status`/`premium_until` continua no banco.
+
 ## Deploy no Railway (projeto `duka-sac`)
 
 Repositório: `ian-marchi/duka_sac` (branch `main`). O `railway.json` já diz build

@@ -35,7 +35,6 @@ function Avatar({ p, size = 28 }: { p: Pessoa; size?: number }) {
   return (
     <span className="relative flex shrink-0 items-center justify-center rounded-full bg-brand font-display font-bold text-white" style={{ width: size, height: size, fontSize: size * 0.4 }}>
       {p.nome.trim().charAt(0).toUpperCase()}
-      {p.premium && <span className="absolute rotate-[20deg]" style={{ top: -size * 0.3, right: -size * 0.22, fontSize: size * 0.4 }}>👑</span>}
     </span>
   )
 }
@@ -181,7 +180,7 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
         <div className="min-w-0 flex-1">
           <div className="truncate font-display text-lg font-extrabold">{p.nome} {p.user && <span className="text-sm font-semibold text-fg2">@{p.user}</span>}</div>
           <div className="text-xs text-fg2">
-            {p.premium ? '👑 Premium' : 'Free'} · {fullNumber(p.pontos)} pontos · conta desde {p.criado.split('-').reverse().join('/')}
+            {fullNumber(p.pontos)} pontos · conta desde {p.criado.split('-').reverse().join('/')}
             {p.ultAb ? ` · última abertura há ${diffDays(p.ultAb, hoje)} dias` : ' · nunca abriu o app'}
           </div>
         </div>

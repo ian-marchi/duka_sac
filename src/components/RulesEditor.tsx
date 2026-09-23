@@ -98,7 +98,7 @@ export function RulesEditor({ rules }: { rules: PriorityRule[] }) {
         </table>
       </div>
       <p className="text-xs text-muted">
-        Maior peso vence no desempate. Regras com limiares (usuários/ocorrências/premium)
+        Maior peso vence no desempate. Regras com limiares (usuários/ocorrências)
         não entram no teste de texto acima — só valem quando um ticket real bate os critérios.
       </p>
     </div>
