@@ -88,6 +88,27 @@ mesmo bot da Lumi que cadastra os beta testers. Com `SUPABASE_URL` e `SUPABASE_S
 `.env` dele, ele passa a esvaziar a fila (1 mensagem a cada 5 s, máximo 40 por hora) e avisa o admin
 quando um aluno responde. `npm run whatsapp` aqui só chama o `npm start` de lá.
 
+### Responder ticket pelo WhatsApp (migration 091)
+
+O painel **não responde mais por e-mail**. Na mesa `/tickets`, o card
+**Responder pelo WhatsApp** (`src/components/ReplyBox.tsx`) tem:
+
+- **Modelo** — `support.whatsapp_templates` com chave `resposta:<nome>`
+  (`questao`, `bug`, `sugestao`, `pc`, `voz`, `default`); troca `{nome}`, `{ref}`
+  e `{titulo}` no texto;
+- **Número** — `support.telefone_do_usuario(uid)` (`users.phone` ou
+  `contatos_whatsapp`); sem número, aparece "sem número" e dá para digitar um;
+- **Salvar rascunho** → linha `tipo='manual'`, `status='draft'` na fila (o bot
+  ignora); **Enviar pelo WhatsApp** → `status='queued'` e o ticket vai para
+  *Aguardando*.
+
+O painel só insere na fila; quem envia é o bot. Em **WhatsApp** (lateral do
+ticket) cada rascunho tem **Liberar** (draft→queued) e **Descartar**
+(draft→skipped, erro `descartada`). Actions em `src/app/(painel)/t/[id]/actions.ts`
+(`enviarWhatsapp`, `liberarWhatsapp`, `descartarWhatsapp`); cada passo vira um
+evento `whatsapp` no histórico. O `sendReply` (e-mail via Edge `ticket-reply`)
+continua no código, mas a UI não usa.
+
 ## Aba WhatsApp: quem chegou pelo WhatsApp (por escola)
 
 A aba **`/whatsapp`** é a métrica separada de quem foi abordado pelo WhatsApp:

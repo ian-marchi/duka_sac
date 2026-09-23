@@ -1,5 +1,6 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import { timeAgo } from '@/lib/format'
+import { RascunhoAcoes } from '@/components/RascunhoAcoes'
 
 type Linha = { id: number; tipo: string; status: string; to_phone: string | null; corpo: string; erro: string | null; criado_em: string; enviado_em: string | null }
 
@@ -8,8 +9,9 @@ const STATUS: Record<string, { label: string; cor: string }> = {
   sent:    { label: 'enviada',   cor: 'rgb(var(--ok))' },
   failed:  { label: 'falhou',    cor: 'rgb(var(--p0))' },
   skipped: { label: 'sem número', cor: 'rgb(var(--muted))' },
+  draft:   { label: 'rascunho',  cor: 'rgb(var(--brand))' },
 }
-const TIPO: Record<string, string> = { recebido: 'Entrou em análise', resolvido: 'Resolvido', manual: 'Manual' }
+const TIPO: Record<string, string> = { recebido: 'Entrou em análise', resolvido: 'Resolvido', manual: 'Resposta' }
 
 /**
  * Mensagens de WhatsApp ligadas a este ticket (support.whatsapp_outbox,
@@ -30,7 +32,7 @@ export async function WhatsappStatus({ ticketId }: { ticketId: number }) {
         {linhas.map((l) => {
           const st = STATUS[l.status] ?? { label: l.status, cor: 'rgb(var(--muted))' }
           return (
-            <details key={l.id} className="text-xs">
+            <details key={l.id} className="text-xs" open={l.status === 'draft'}>
               <summary className="flex cursor-pointer items-center gap-2">
                 <span className="inline-block h-2 w-2 rounded-full" style={{ background: st.cor }} />
                 <span className="font-bold">{TIPO[l.tipo] ?? l.tipo}</span>
@@ -39,6 +41,7 @@ export async function WhatsappStatus({ ticketId }: { ticketId: number }) {
               </summary>
               <p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-bg p-2 text-fg/80">{l.corpo}</p>
               {l.erro && <p className="mt-1 text-p0">{l.erro}</p>}
+              {l.status === 'draft' && <RascunhoAcoes outboxId={l.id} />}
             </details>
           )
         })}

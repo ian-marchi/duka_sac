@@ -86,6 +86,11 @@ export type ReplyTemplate = {
   kind: string[]
 }
 
+// support.whatsapp_templates / whatsapp_outbox (088 + 091) ─────────────────
+export type WhatsappTemplate = { chave: string; corpo: string }
+
+export type WhatsappOutboxStatus = 'queued' | 'sent' | 'failed' | 'skipped' | 'draft'
+
 export type PriorityRule = {
   id: string
   enabled: boolean

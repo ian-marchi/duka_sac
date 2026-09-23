@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { supabaseServer } from '@/lib/supabase/server'
-import type { Ticket, TicketEvent, ReplyTemplate } from '@/lib/types'
+import type { Ticket, TicketEvent, WhatsappTemplate } from '@/lib/types'
 import { KIND_META } from '@/lib/types'
 import { PriorityTag } from '@/components/PriorityTag'
 import { StatusPill } from '@/components/StatusPill'
@@ -25,9 +25,12 @@ export async function TicketDetalhe({ id }: { id: number }) {
   }
   const t = raw as Ticket
 
-  const [{ data: events }, { data: templates }, related] = await Promise.all([
+  const [{ data: events }, { data: templates }, { data: phone }, related] = await Promise.all([
     supabase.from('ticket_events').select('*').eq('ticket_id', id).order('created_at', { ascending: true }),
-    supabase.from('reply_templates').select('*'),
+    supabase.from('whatsapp_templates').select('chave, corpo').like('chave', 'resposta:%').order('chave'),
+    t.user_id
+      ? supabase.rpc('telefone_do_usuario', { p_user: t.user_id })
+      : Promise.resolve({ data: null as string | null }),
     t.user_id
       ? supabase.from('tickets').select('id, ref, kind, status').eq('user_id', t.user_id).neq('id', id).limit(5)
       : Promise.resolve({ data: [] as { id: number; ref: string }[] }),
@@ -75,8 +78,13 @@ export async function TicketDetalhe({ id }: { id: number }) {
             </div>
           )}
           <section className="card">
-            <h2 className="card-h">Responder por e-mail</h2>
-            <ReplyBox id={t.id} toEmail={t.reporter_email} ref_={t.ref} kind={t.kind} reporterName={t.reporter_name} templates={(templates ?? []) as ReplyTemplate[]} />
+            <h2 className="card-h">Responder pelo WhatsApp</h2>
+            <ReplyBox
+              id={t.id} ref_={t.ref} reporterName={t.reporter_name ?? profile?.full_name ?? null}
+              titulo={(t.title || t.message || '').replace(/\s+/g, ' ').replace(/^Feedback do beta: /, '').slice(0, 90)}
+              phone={(phone as string | null) ?? null}
+              templates={(templates ?? []) as WhatsappTemplate[]}
+            />
           </section>
           <section className="card">
             <h2 className="card-h">Histórico</h2>
@@ -97,7 +105,6 @@ export async function TicketDetalhe({ id }: { id: number }) {
                 {profile?.username && <div className="truncate text-xs text-muted">@{profile.username}</div>}
               </div>
             </div>
-            {t.reporter_email && <div className="mt-1 text-xs text-muted">{t.reporter_email}</div>}
             {profile && (
               <div className="mt-2 space-y-0.5 text-xs text-muted">
                 <div>{premium ? `👑 ${profile.premium_status}` : 'free'}{profile.premium_until ? ` até ${fullDate(profile.premium_until)}` : ''}</div>

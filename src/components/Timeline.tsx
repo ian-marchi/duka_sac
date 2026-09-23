@@ -3,7 +3,7 @@ import { fullDate } from '@/lib/format'
 
 const TYPE_LABEL: Record<string, string> = {
   created: 'criado', status: 'status', priority: 'prioridade',
-  reply: 'respondeu', note: 'nota', merge: 'fundiu', duplicate: 'duplicado',
+  reply: 'respondeu', whatsapp: 'WhatsApp', note: 'nota', merge: 'fundiu', duplicate: 'duplicado',
 }
 
 export function Timeline({ events }: { events: TicketEvent[] }) {
