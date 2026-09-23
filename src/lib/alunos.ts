@@ -54,8 +54,35 @@ export type ResumoAlunos = {
   anos: { label: string; value: number }[]
   avisos: { tipo: string; itens: { nome: string; contato: string; obs: string }[] }[]
   duplicatas: Aluno[]
-  /** Escola/ano de cada conta do app que conseguimos ligar à planilha (por qualquer ponte). */
-  contas: Record<string, { escola: string; ano: string; como: string }>
+  /** Escola/ano/canal de cada conta do app que conseguimos ligar a alguma origem (por qualquer ponte). */
+  contas: Record<string, ContaOrigem>
+}
+
+export type ContaOrigem = {
+  escola: string
+  ano: string
+  como: string
+  /** por onde a pessoa chegou: 'whatsapp' (planilha do bot) ou 'direto' (convite pessoal) */
+  canal: 'whatsapp' | 'direto' | 'indicacao' | 'outro'
+  cidade?: string | null
+  curso?: string | null
+}
+
+/** Linha de support.alunos_origem (090): contas que NÃO vieram pelo WhatsApp Business, ligadas à mão. */
+export type OrigemManual = {
+  user_id: string; canal: 'direto' | 'whatsapp' | 'indicacao' | 'outro'
+  escola: string | null; ano: string | null; cidade: string | null; estado: string | null; curso: string | null; observacao: string | null
+}
+
+export const CANAL_LABEL: Record<ContaOrigem['canal'], string> = {
+  whatsapp: 'WhatsApp', direto: 'Contato direto', indicacao: 'Indicação', outro: 'Outro',
+}
+
+/** Uma linha por escola entre as contas ligadas: é o que vira chip na mesa de alunos. */
+export function escolasDasContas(contas: Record<string, ContaOrigem>): { escola: string; curto: string; slug: string; total: number }[] {
+  const m = new Map<string, number>()
+  for (const c of Object.values(contas)) m.set(c.escola, (m.get(c.escola) ?? 0) + 1)
+  return [...m.entries()].map(([escola, total]) => ({ escola, curto: escolaCurta(escola), slug: escolaSlug(escola), total })).sort((a, b) => b.total - a.total)
 }
 
 /** Linha de support.contatos_whatsapp: ponte conta ↔ telefone feita pelo cruzamento em camadas (scripts/duka_contatos.py). */
@@ -122,6 +149,9 @@ export const ESCOLAS: { casa: RegExp; nome: string; curto: string }[] = [
   { casa: /plinio|normal/,   nome: 'E.E. Prof. Plínio Ribeiro', curto: 'Escola Normal' },
   { casa: /alcides|polivalente/, nome: 'E.E. Prof. Alcides de Carvalho', curto: 'Polivalente' },
   { casa: /atenas/,          nome: 'Colégio Atenas',            curto: 'Atenas' },
+  { casa: /teresinha/,       nome: 'Colégio Santa Teresinha',   curto: 'Santa Teresinha' },
+  { casa: /etapa/,           nome: 'Pré-vestibular Etapa',      curto: 'Etapa' },
+  { casa: /salesian/,        nome: 'Salesianos Santa Rosa',     curto: 'Salesianos' },
 ]
 
 /** Nome canônico da escola a partir do que a pessoa escreveu. */
@@ -261,7 +291,7 @@ export function alunosParaCsv(alunos: Aluno[]): string {
 export function resumirAlunos(
   base: { alunos: Aluno[]; atualizadoEm: string | null; arquivo?: string },
   pessoas: Pessoa[],
-  pontes: { contatos?: ContatoWs[]; telefones?: Map<string, string | null> } = {},
+  pontes: { contatos?: ContatoWs[]; telefones?: Map<string, string | null>; origens?: OrigemManual[] } = {},
 ): ResumoAlunos {
   const porId = new Map(pessoas.map((p) => [p.id, p]))
   const porNome = new Map<string, Pessoa>()
@@ -285,7 +315,7 @@ export function resumirAlunos(
     const p = porId.get(c.user_id)
     if (!p) continue
     liga(porTelefone.get(telefoneNorm(c.telefone)), p)
-    if (c.escola) contas[p.id] = { escola: escolaDe(c.escola), ano: c.ano ?? 'Não informado', como: c.como ?? 'planilha' }
+    if (c.escola) contas[p.id] = { escola: escolaDe(c.escola), ano: c.ano ?? 'Não informado', como: c.como ?? 'planilha', canal: 'whatsapp' }
   }
   // 2. telefone do cadastro
   for (const p of pessoas) liga(porTelefone.get(telefoneNorm(pontes.telefones?.get(p.id))), p)
@@ -294,9 +324,18 @@ export function resumirAlunos(
 
   const alunos = base.alunos.map((a, i) => {
     const p = contaDe.get(i)
-    if (p && !contas[p.id]) contas[p.id] = { escola: a.escola, ano: a.ano, como: 'planilha' }
+    if (p && !contas[p.id]) contas[p.id] = { escola: a.escola, ano: a.ano, como: 'planilha', canal: 'whatsapp' }
     return { ...a, conta: p ? { id: p.id, nome: p.nome, grupo: p.grupo, criado: p.criado } : null }
   })
+  // 4. origem manual (contato direto, antes do bot): só quem ainda não casou com a planilha
+  for (const o of pontes.origens ?? []) {
+    const p = porId.get(o.user_id)
+    if (!p || contas[p.id]) continue
+    contas[p.id] = {
+      escola: o.escola ? escolaDe(o.escola) : 'Contato direto',
+      ano: o.ano ?? 'Não informado', como: 'manual', canal: o.canal, cidade: o.cidade, curso: o.curso,
+    }
+  }
 
   const conta = (f: (a: Aluno) => boolean) => alunos.filter(f).length
   const agrupa = (chave: (a: Aluno) => string, filtro: (a: Aluno) => boolean = () => true) => {

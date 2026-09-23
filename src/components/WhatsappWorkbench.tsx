@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { STATUS_META, escolaCurta, semAcento, type Aluno, type ResumoAlunos, type ScanRun } from '@/lib/alunos'
 import { ScanAlunos } from '@/components/ScanAlunos'
+import { PerfilPopup, type PerfilResumo } from '@/components/PerfilPopup'
 
 /* ── peças ─────────────────────────────────────────────────────────────────── */
 
@@ -126,7 +127,7 @@ export function WhatsappResumo({ ws, scan, f }: { ws: ResumoAlunos; scan: { ulti
 
 /* ── coluna 2: lista ───────────────────────────────────────────────────────── */
 
-export function WhatsappLista({ ws, alunos, f, q }: { ws: ResumoAlunos; alunos: Aluno[]; f: string; q: string }) {
+export function WhatsappLista({ ws, alunos, f, q, perfis }: { ws: ResumoAlunos; alunos: Aluno[]; f: string; q: string; perfis: Record<string, PerfilResumo> }) {
   const href = (over: Partial<{ f: string; q: string }>) => {
     const p = new URLSearchParams()
     const ff = over.f ?? f, qq = over.q ?? q
@@ -168,7 +169,9 @@ export function WhatsappLista({ ws, alunos, f, q }: { ws: ResumoAlunos; alunos: 
                 <td className="px-2 py-1.5"><StatusPill s={a.status} /></td>
                 <td className="px-2 py-1.5">
                   {a.conta
-                    ? <Link href={`/alunos?u=${a.conta.id}`} className="chip chip-on" title={`abrir ${a.conta.nome} na mesa de alunos`}>sim</Link>
+                    ? (perfis[a.conta.id]
+                        ? <PerfilPopup p={perfis[a.conta.id]} />
+                        : <Link href={`/alunos?u=${a.conta.id}`} className="chip chip-on">sim</Link>)
                     : a.nome ? <span className="text-muted">ainda não</span> : <span className="text-muted">—</span>}
                 </td>
                 <td className="max-w-[26ch] truncate px-2 py-1.5 text-[11px] text-muted" title={a.obs}>{a.obs}</td>

@@ -78,10 +78,12 @@ export function relatoriosBase(
     { label: 'Pública', value: a.perfil.publica }, { label: 'Particular', value: a.perfil.particular },
     { label: 'Não informou', value: a.total - a.perfil.publica - a.perfil.particular },
   ].filter((x) => x.value > 0)
+  const canalDe = (id: string) => ws.contas[id]?.canal ?? (wsPorConta.has(id) ? 'whatsapp' : null)
   const canal = [
-    { label: 'WhatsApp (planilha)', value: a.pessoas.filter((p) => ws.contas[p.id] || wsPorConta.has(p.id)).length },
-    { label: 'Outro caminho', value: a.pessoas.filter((p) => !ws.contas[p.id] && !wsPorConta.has(p.id)).length },
-  ]
+    { label: 'WhatsApp', value: a.pessoas.filter((p) => canalDe(p.id) === 'whatsapp').length },
+    { label: 'Contato direto', value: a.pessoas.filter((p) => canalDe(p.id) === 'direto').length },
+    { label: 'Outro caminho', value: a.pessoas.filter((p) => !canalDe(p.id)).length },
+  ].filter((x) => x.value > 0)
 
   // frequência
   const grupos = (Object.keys(GRUPO_META) as Grupo[]).map((g) => ({ g, n: a.grupos[g].length }))

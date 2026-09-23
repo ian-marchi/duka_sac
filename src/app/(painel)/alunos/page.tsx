@@ -1,7 +1,7 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import type { AppUser, AppOpen, AiUsageRow } from '@/lib/types'
 import { analisar, addDays, hojeSP, diffDays } from '@/lib/analytics'
-import { carregarAlunos, alunosDeLinhas, resumirAlunos, semAcento, type LinhaScan, type ContatoWs } from '@/lib/alunos'
+import { carregarAlunos, alunosDeLinhas, resumirAlunos, semAcento, type LinhaScan, type ContatoWs, type OrigemManual, escolasDasContas } from '@/lib/alunos'
 import { relatoriosBase, detalheAluno, type SimRow, type EssayRow, type TicketLite } from '@/lib/alunosAnalise'
 import { RelatoriosColuna, AlunosLista, AlunoDetalheView } from '@/components/AlunosWorkbench'
 
@@ -21,7 +21,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   const days = 14
   const since = addDays(hoje, -days)
 
-  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: contatos }] = await Promise.all([
+  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: contatos }, { data: origens }] = await Promise.all([
     pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at, phone').limit(5000),
     pub.from('app_opens').select('user_id, dia, aberturas').limit(50000),
     pub.from('ai_usage').select('user_id, feature, total_tokens, ok, cost_usd, created_at').gte('created_at', `${since}T00:00:00Z`).limit(50000),
@@ -31,6 +31,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     // planilha do WhatsApp (migration 089): o que o scan gravou
     supabase.from('alunos_whatsapp').select('telefone, contato, nome, telefone_informado, escola_bruta, ano_bruto, status, observacao, cadastrado_no_bot, registrado_no_app, ultima_msg, atualizado_em').limit(10000),
     supabase.from('contatos_whatsapp').select('user_id, telefone, escola, ano, como').limit(5000),
+    supabase.from('alunos_origem').select('user_id, canal, escola, ano, cidade, estado, curso, observacao').limit(5000),
   ])
   if (uErr) {
     return <div className="p-6 text-sm text-muted">Não consegui ler <code>public.users</code>: {uErr.message}</div>
@@ -44,8 +45,9 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   const ws = resumirAlunos(
     linhas.length ? { ...alunosDeLinhas(linhas), arquivo: 'support.alunos_whatsapp' } : carregarAlunos(),
     a.pessoas,
-    { contatos: (contatos ?? []) as ContatoWs[], telefones },
+    { contatos: (contatos ?? []) as ContatoWs[], telefones, origens: (origens ?? []) as OrigemManual[] },
   )
+  const escolasChips = escolasDasContas(ws.contas)
   const simsR = (sims ?? []) as SimRow[]
   const essR = (essays ?? []) as EssayRow[]
   const tkR = (tickets ?? []) as TicketLite[]
@@ -63,7 +65,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     if (f === 'habito') return p.grupo === 'habito'
     if (f === 'nunca') return p.grupo === 'nunca'
     if (f.startsWith('escola:')) {
-      const e = ws.porEscola.find((x) => x.slug === f.slice(7))
+      const e = escolasChips.find((x) => x.slug === f.slice(7))
       return !!e && escolaDe(p.id) === e.escola
     }
     return true
@@ -77,7 +79,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   return (
     <div className="grid h-full grid-cols-[318px_360px_minmax(0,1fr)]">
       <RelatoriosColuna r={base} total={a.total} days={days} hoje={hoje} ws={ws} />
-      <div className="h-full min-h-0 border-r"><AlunosLista pessoas={lista} selected={u} f={f} q={q} hoje={hoje} escolaDe={escolaDe} escolas={ws.porEscola} /></div>
+      <div className="h-full min-h-0 border-r"><AlunosLista pessoas={lista} selected={u} f={f} q={q} hoje={hoje} escolaDe={escolaDe} escolas={escolasChips} /></div>
       <div className="h-full min-h-0 overflow-hidden">
         {det ? <AlunoDetalheView d={det} hoje={hoje} /> : (
           <div className="flex h-full flex-col items-center justify-center gap-2 p-10 text-center text-muted">

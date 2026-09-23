@@ -1,6 +1,8 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import type { AppUser, AppOpen } from '@/lib/types'
-import { analisar, hojeSP } from '@/lib/analytics'
+import { analisar, hojeSP, GRUPO_META } from '@/lib/analytics'
+import { CANAL_LABEL } from '@/lib/alunos'
+import type { PerfilResumo } from '@/components/PerfilPopup'
 import { carregarAlunos, alunosDeLinhas, resumirAlunos, semAcento, type LinhaScan, type ScanRun, type ContatoWs } from '@/lib/alunos'
 import { WhatsappResumo, WhatsappLista, filtrarWhatsapp } from '@/components/WhatsappWorkbench'
 
@@ -42,10 +44,26 @@ export default async function WhatsappPage({ searchParams }: { searchParams: Pro
 
   const lista = filtrarWhatsapp(ws, f, semAcento(q))
 
+  // O pop-up "No app": o perfil da conta ligada a cada linha (só o que o painel já mostra).
+  const porId = new Map(a.pessoas.map((p) => [p.id, p]))
+  const perfis: Record<string, PerfilResumo> = {}
+  for (const al of ws.alunos) {
+    const p = al.conta && porId.get(al.conta.id)
+    if (!p || perfis[p.id]) continue
+    const c = ws.contas[p.id]
+    perfis[p.id] = {
+      id: p.id, nome: p.nome, user: p.user, email: p.email, criado: p.criado, ultAb: p.ultAb, diasAt: p.diasAt, ab: p.ab,
+      pontos: p.pontos, premium: p.premium, grupoTag: GRUPO_META[p.grupo].tag, grupoCor: GRUPO_META[p.grupo].cor,
+      exame: p.exame, curso: p.curso, idade: p.idade, tipoEscola: p.escola === 'publica' ? 'pública' : p.escola === 'particular' ? 'particular' : null, ia: p.ia,
+      escola: c?.escola ?? al.escola, ano: c?.ano ?? al.ano, canal: c ? CANAL_LABEL[c.canal] : 'WhatsApp', cidade: c?.cidade ?? null,
+      contato: al.contato, obs: al.obs || null,
+    }
+  }
+
   return (
     <div className="grid h-full grid-cols-[340px_minmax(0,1fr)]">
       <WhatsappResumo ws={ws} scan={scan} f={f} />
-      <div className="h-full min-h-0"><WhatsappLista ws={ws} alunos={lista} f={f} q={q} /></div>
+      <div className="h-full min-h-0"><WhatsappLista ws={ws} alunos={lista} f={f} q={q} perfis={perfis} /></div>
     </div>
   )
 }
