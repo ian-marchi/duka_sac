@@ -28,6 +28,11 @@ export type PerfilResumo = {
   cidade: string | null
   contato: string | null
   obs: string | null
+  /** contato e aparelho (migration 100) — opcionais, a aba WhatsApp preenche */
+  telefone?: string | null
+  celular?: string | null
+  versao?: string | null
+  canalApp?: string | null
 }
 
 const dt = (iso: string | null) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '—')
@@ -79,6 +84,10 @@ export function PerfilPopup({ p, rotulo = 'sim' }: { p: PerfilResumo; rotulo?: s
               <dt className="kicker">Escola</dt><dd>{p.escola ?? '—'}{p.ano ? ` · ${p.ano}` : ''}</dd>
               <dt className="kicker">Chegou por</dt><dd>{p.canal ?? '—'}{p.cidade ? ` · ${p.cidade}` : ''}</dd>
               {p.contato && <><dt className="kicker">WhatsApp</dt><dd>{p.contato}</dd></>}
+              {p.telefone && <><dt className="kicker">Telefone (app)</dt><dd className="select-all">{p.telefone}</dd></>}
+              {(p.celular || p.versao) && (
+                <><dt className="kicker">Aparelho</dt><dd>{[p.celular, p.versao ? `app ${p.versao}` : null, p.canalApp].filter(Boolean).join(' · ')}</dd></>
+              )}
               {p.obs && <><dt className="kicker">Observação</dt><dd className="text-fg2">{p.obs}</dd></>}
             </dl>
 

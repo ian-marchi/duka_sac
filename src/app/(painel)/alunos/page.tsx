@@ -2,7 +2,8 @@ import { supabaseServer } from '@/lib/supabase/server'
 import type { AppUser, AppOpen, AiUsageRow } from '@/lib/types'
 import { analisar, addDays, hojeSP, diffDays } from '@/lib/analytics'
 import { carregarAlunos, alunosDeLinhas, resumirAlunos, semAcento, type LinhaScan, type ContatoWs, type OrigemManual, escolasDasContas } from '@/lib/alunos'
-import { relatoriosBase, detalheAluno, type SimRow, type EssayRow, type TicketLite } from '@/lib/alunosAnalise'
+import { relatoriosBase, detalheAluno, type SimRow, type EssayRow, type TicketLite, type FontesAparelho } from '@/lib/alunosAnalise'
+import type { UserDevice, PushTokenLite } from '@/lib/aparelho'
 import { RelatoriosColuna, AlunosLista, AlunoDetalheView } from '@/components/AlunosWorkbench'
 
 export const dynamic = 'force-dynamic'
@@ -21,17 +22,20 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   const days = 14
   const since = addDays(hoje, -days)
 
-  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: contatos }, { data: origens }] = await Promise.all([
+  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: contatos }, { data: origens }, { data: devices }, { data: pushes }] = await Promise.all([
     pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at, phone').limit(5000),
     pub.from('app_opens').select('user_id, dia, aberturas').limit(50000),
     pub.from('ai_usage').select('user_id, feature, total_tokens, ok, cost_usd, created_at').gte('created_at', `${since}T00:00:00Z`).limit(50000),
     pub.from('simulations').select('user_id, total_questions, correct_answers, status, started_at').limit(20000),
     pub.from('essays').select('user_id, created_at').limit(20000),
-    supabase.from('tickets').select('id, ref, apelido, title, priority, status, user_id, created_at').limit(5000),
+    supabase.from('tickets').select('id, ref, apelido, title, priority, status, user_id, created_at, platform, os_version, device_model, app_version').limit(5000),
     // planilha do WhatsApp (migration 089): o que o scan gravou
     supabase.from('alunos_whatsapp').select('telefone, contato, nome, telefone_informado, escola_bruta, ano_bruto, status, observacao, cadastrado_no_bot, registrado_no_app, ultima_msg, atualizado_em').limit(10000),
     supabase.from('contatos_whatsapp').select('user_id, telefone, escola, ano, como').limit(5000),
     supabase.from('alunos_origem').select('user_id, canal, escola, ano, cidade, estado, curso, observacao').limit(5000),
+    // aparelho atual de cada conta (migration 100) + versão de quem aceitou push (fallback)
+    pub.from('user_devices').select('user_id, platform, os_version, device_model, device_id, device_name, app_version, build, runtime_version, canal, updates_channel, first_seen_at, updated_at').limit(5000),
+    pub.from('push_tokens').select('user_id, platform, app_version, updated_at').limit(5000),
   ])
   if (uErr) {
     return <div className="p-6 text-sm text-muted">Não consegui ler <code>public.users</code>: {uErr.message}</div>
@@ -58,6 +62,22 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   const wsPorConta = new Map(ws.alunos.filter((al) => al.conta).map((al) => [al.conta!.id, al]))
   const escolaDe = (id: string) => ws.contas[id]?.escola ?? wsPorConta.get(id)?.escola ?? null
 
+  // Fontes do card "Aparelho e contato": user_devices > push_tokens (o mais
+  // recente por conta) > tickets. Telefone: cadastro do app, senão a ponte do WhatsApp.
+  const pushPorConta = new Map<string, PushTokenLite>()
+  for (const t of (pushes ?? []) as PushTokenLite[]) {
+    const atual = pushPorConta.get(t.user_id)
+    if (!atual || (t.updated_at ?? '') > (atual.updated_at ?? '')) pushPorConta.set(t.user_id, t)
+  }
+  const telefonesWs = new Map<string, string>()
+  for (const c of (contatos ?? []) as ContatoWs[]) if (c.user_id && c.telefone && !telefonesWs.has(c.user_id)) telefonesWs.set(c.user_id, c.telefone)
+  const fontes: FontesAparelho = {
+    devices: new Map(((devices ?? []) as UserDevice[]).map((d) => [d.user_id, d])),
+    push: pushPorConta,
+    telefonesWs,
+  }
+  const telefoneDe = (p: { id: string; telefone: string | null }) => p.telefone ?? telefonesWs.get(p.id) ?? ''
+
   // filtro + busca
   const nq = semAcento(q)
   let lista = a.pessoas.filter((p) => {
@@ -70,11 +90,16 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     }
     return true
   })
-  if (nq) lista = lista.filter((p) => semAcento(`${p.nome} ${p.user ?? ''} ${p.email ?? ''} ${escolaDe(p.id) ?? ''}`).includes(nq))
+  // Busca também por telefone (com ou sem +55/espaços) — o suporte chega com o número do WhatsApp na mão.
+  const nqDigitos = q.replace(/\D/g, '')
+  if (nq) lista = lista.filter((p) =>
+    semAcento(`${p.nome} ${p.user ?? ''} ${p.email ?? ''} ${escolaDe(p.id) ?? ''}`).includes(nq)
+    || (nqDigitos.length >= 4 && telefoneDe(p).replace(/\D/g, '').includes(nqDigitos)),
+  )
   lista.sort((x, y) => y.diasAt - x.diasAt || y.pontos - x.pontos)
 
   const sel = u ? a.pessoas.find((p) => p.id === u) ?? null : null
-  const det = sel ? detalheAluno(sel, a, opensR, usageR, simsR, essR, tkR, ws) : null
+  const det = sel ? detalheAluno(sel, a, opensR, usageR, simsR, essR, tkR, ws, fontes) : null
 
   return (
     <div className="grid h-full grid-cols-[318px_360px_minmax(0,1fr)]">

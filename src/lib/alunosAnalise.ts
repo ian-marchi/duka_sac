@@ -3,6 +3,7 @@ import { DIAS, GRUPO_META, addDays, diffDays, dowPt, type Grupo } from './analyt
 import type { AppOpen, AiUsageRow } from './types'
 import { featureLabel } from './types'
 import type { Aluno, ResumoAlunos } from './alunos'
+import { montarAparelho, type Aparelho, type UserDevice, type PushTokenLite } from './aparelho'
 
 /**
  * Os três relatórios da mesa de alunos (desenho F): de onde vêm, frequência e
@@ -14,7 +15,11 @@ import type { Aluno, ResumoAlunos } from './alunos'
 export type Item = { label: string; value: number }
 export type SimRow = { user_id: string; total_questions: number | null; correct_answers: number | null; status: string | null; started_at: string }
 export type EssayRow = { user_id: string; created_at: string }
-export type TicketLite = { id: number; ref: string; apelido: string | null; title: string | null; priority: string; status: string; user_id: string | null; created_at: string }
+export type TicketLite = {
+  id: number; ref: string; apelido: string | null; title: string | null; priority: string; status: string; user_id: string | null; created_at: string
+  /** Contexto do aparelho anexado ao ticket — fallback do card "Aparelho" quando user_devices ainda não tem a pessoa. */
+  platform?: string | null; os_version?: string | null; device_model?: string | null; app_version?: string | null
+}
 
 export type RelatoriosBase = {
   origem: { escolas: Item[]; tipoEscola: Item[]; canal: Item[]; exames: Item[]; cursos: Item[] }
@@ -43,6 +48,17 @@ export type AlunoDetalhe = {
   redacoes: number
   tickets: TicketLite[]
   diasSemana: number
+  /** Telefone (cadastro do app, senão a ponte do WhatsApp), cru. */
+  telefone: string | null
+  /** Celular, sistema, versão do app e canal (beta/loja). null = nenhuma fonte sabe. */
+  aparelho: Aparelho | null
+}
+
+export type FontesAparelho = {
+  devices: Map<string, UserDevice>
+  push: Map<string, PushTokenLite>
+  /** Telefone por conta vindo das pontes do WhatsApp (contatos_whatsapp). */
+  telefonesWs: Map<string, string>
 }
 
 const media = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0)
@@ -113,7 +129,9 @@ export function relatoriosBase(
 
 export function detalheAluno(
   p: Pessoa, a: Analise, opens: AppOpen[], usage: AiUsageRow[], sims: SimRow[], essays: EssayRow[], tickets: TicketLite[], ws: ResumoAlunos,
+  fontes?: FontesAparelho,
 ): AlunoDetalhe {
+  const meusTickets = tickets.filter((t) => t.user_id === p.id).sort((x, y) => y.created_at.localeCompare(x.created_at))
   const meus = opens.filter((o) => o.user_id === p.id)
   const porDia = new Map(meus.map((o) => [o.dia, o.aberturas]))
   const calendario: { dia: string; aberturas: number }[] = []
@@ -128,7 +146,9 @@ export function detalheAluno(
     recursos: recursosDe(meuUso, meusSims, minhasRed),
     simulados: { n: meusSims.length, acerto: acertoMedio(meusSims) },
     redacoes: minhasRed.length,
-    tickets: tickets.filter((t) => t.user_id === p.id).sort((x, y) => y.created_at.localeCompare(x.created_at)).slice(0, 5),
+    tickets: meusTickets.slice(0, 5),
     diasSemana: p.diasAt / (a.days / 7),
+    telefone: p.telefone ?? fontes?.telefonesWs.get(p.id) ?? null,
+    aparelho: montarAparelho(fontes?.devices.get(p.id), fontes?.push.get(p.id), meusTickets),
   }
 }

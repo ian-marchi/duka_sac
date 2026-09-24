@@ -4,6 +4,8 @@ import { GRUPO_META, DIA_NOME, diffDays } from '@/lib/analytics'
 import type { RelatoriosBase, AlunoDetalhe, Item } from '@/lib/alunosAnalise'
 import { compactNumber, fullNumber } from '@/lib/format'
 import { escolaCurta, type ResumoAlunos } from '@/lib/alunos'
+import { formatarTelefone, telefoneDigitos } from '@/lib/aparelho'
+import { Copiar } from '@/components/Copiar'
 
 /* ── peças ─────────────────────────────────────────────────────────────────── */
 
@@ -173,6 +175,13 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
   const maxCal = Math.max(1, ...d.calendario.map((c) => c.aberturas))
   const nivel = (n: number) => (n === 0 ? 'rgb(var(--border))' : n / maxCal < 0.34 ? '#4A2A6B' : n / maxCal < 0.67 ? '#7D2FA8' : 'rgb(var(--brand))')
   const esc = ws?.escola ?? (p.escola === 'publica' ? 'Escola pública' : p.escola === 'particular' ? 'Escola particular' : null)
+  const tel = formatarTelefone(d.telefone)
+  const telDig = telefoneDigitos(d.telefone)
+  const ap = d.aparelho
+  const canalChip = ap?.canalKey === 'beta' ? { txt: 'BETA', cls: 'border-brand bg-brandSoft text-brandText' }
+    : ap?.canalKey === 'loja' ? { txt: 'LOJA', cls: 'border-ok/50 bg-ok/15 text-ok' }
+    : ap?.canalKey === 'dev' ? { txt: 'DEV', cls: 'border-border bg-elev text-fg2' }
+    : null
   return (
     <div className="flex h-full flex-col overflow-auto">
       <div className="flex items-center gap-3 border-b px-5 py-3.5">
@@ -183,7 +192,15 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
             {fullNumber(p.pontos)} pontos · conta desde {p.criado.split('-').reverse().join('/')}
             {p.ultAb ? ` · última abertura há ${diffDays(p.ultAb, hoje)} dias` : ' · nunca abriu o app'}
           </div>
+          {/* Contato logo abaixo do nome: é o que o suporte procura primeiro. */}
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+            {p.email && <Copiar texto={p.email} href={`mailto:${p.email}`} titulo="e-mail da conta" />}
+            {tel
+              ? <Copiar texto={telDig ?? tel} mostrar={`📱 ${tel}`} href={telDig ? `https://wa.me/${telDig}` : undefined} titulo="abrir no WhatsApp" />
+              : <span className="text-muted">📱 sem telefone informado</span>}
+          </div>
         </div>
+        {canalChip && <span className={`rounded-full border px-2 py-0.5 font-display text-[10px] font-extrabold ${canalChip.cls}`} title={ap?.canal ?? ''}>{canalChip.txt}</span>}
         <GrupoTag g={p.grupo} />
         {d.tickets.length > 0 && <Link href={`/tickets?t=${d.tickets[0].id}`} className="soft h-8 text-xs">Tickets · {d.tickets.length}</Link>}
       </div>
@@ -197,6 +214,26 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
             <dt className="text-muted">Objetivo</dt><dd>{[p.exame?.toUpperCase(), p.curso].filter(Boolean).join(' · ') || '—'}</dd>
             <dt className="text-muted">Idade</dt><dd>{p.idade ?? '—'}</dd>
             {ws?.obs && <><dt className="text-muted">Obs. WhatsApp</dt><dd className="text-fg2">{ws.obs}</dd></>}
+          </dl>
+        </Card>
+
+        <Card icon="📱" title="Aparelho e contato" tag={ap?.fonte === 'app' ? undefined : ap ? 'estimado' : undefined}>
+          <dl className="grid grid-cols-[96px_1fr] gap-x-2.5 gap-y-1.5 text-xs">
+            <dt className="text-muted">E-mail</dt><dd className="min-w-0">{p.email ? <Copiar texto={p.email} /> : '—'}</dd>
+            <dt className="text-muted">Telefone</dt>
+            <dd className="min-w-0">
+              {tel ? <Copiar texto={telDig ?? tel} mostrar={tel} href={telDig ? `https://wa.me/${telDig}` : undefined} titulo="abrir no WhatsApp" /> : <span className="text-muted">não informou</span>}
+              {tel && !p.telefone && <span className="ml-1 text-[10px] text-muted">(da planilha do WhatsApp)</span>}
+            </dd>
+            <dt className="text-muted">Celular</dt><dd>{ap?.modelo ?? '—'}{ap?.apelido ? <span className="text-fg2"> · “{ap.apelido}”</span> : ''}</dd>
+            <dt className="text-muted">Sistema</dt><dd>{ap?.sistema ?? '—'}</dd>
+            <dt className="text-muted">Versão do app</dt><dd>{ap?.versao ?? '—'}</dd>
+            <dt className="text-muted">Canal</dt><dd>{ap?.canal ?? <span className="text-muted">— ainda não abriu uma versão que informa</span>}</dd>
+            <dt className="text-muted">Visto em</dt>
+            <dd className="text-fg2">
+              {ap?.vistoEm ? `${ap.vistoEm.slice(0, 10).split('-').reverse().join('/')} · ` : ''}
+              {ap ? (ap.fonte === 'app' ? 'informado pelo app ao abrir' : ap.fonte === 'push' ? 'pelo token de notificação' : 'pelo último ticket') : 'nenhuma fonte ainda'}
+            </dd>
           </dl>
         </Card>
 

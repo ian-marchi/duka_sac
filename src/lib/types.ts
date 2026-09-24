@@ -222,6 +222,8 @@ export type AppUser = {
   school_type: string | null
   weekly_availability: Record<string, number[]> | null
   created_at: string
+  /** Telefone informado no cadastro/onboarding ("+5538992667095"), se houver. */
+  phone?: string | null
 }
 
 export type AppOpen = { user_id: string; dia: string; aberturas: number }
