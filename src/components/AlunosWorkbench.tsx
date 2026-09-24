@@ -224,6 +224,9 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
             <dd className="min-w-0">
               {tel ? <Copiar texto={telDig ?? tel} mostrar={tel} href={telDig ? `https://wa.me/${telDig}` : undefined} titulo="abrir no WhatsApp" /> : <span className="text-muted">não informou</span>}
               {tel && !p.telefone && <span className="ml-1 text-[10px] text-muted">(da planilha do WhatsApp)</span>}
+              {tel && p.telefone && (p.telefoneConfirmadoEm
+                ? <span className="ml-1 text-[10px] text-ok" title={`confirmado por código em ${p.telefoneConfirmadoEm.slice(0, 10).split('-').reverse().join('/')}`}>✓ confirmado</span>
+                : <span className="ml-1 text-[10px] text-muted">não confirmado</span>)}
             </dd>
             <dt className="text-muted">Celular</dt><dd>{ap?.modelo ?? '—'}{ap?.apelido ? <span className="text-fg2"> · “{ap.apelido}”</span> : ''}</dd>
             <dt className="text-muted">Sistema</dt><dd>{ap?.sistema ?? '—'}</dd>

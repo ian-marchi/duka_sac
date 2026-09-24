@@ -224,6 +224,8 @@ export type AppUser = {
   created_at: string
   /** Telefone informado no cadastro/onboarding ("+5538992667095"), se houver. */
   phone?: string | null
+  /** Quando o aluno confirmou o telefone por código (migration 102); null = ainda não. */
+  phone_verified_at?: string | null
 }
 
 export type AppOpen = { user_id: string; dia: string; aberturas: number }

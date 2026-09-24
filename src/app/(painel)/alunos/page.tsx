@@ -23,7 +23,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   const since = addDays(hoje, -days)
 
   const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: contatos }, { data: origens }, { data: devices }, { data: pushes }] = await Promise.all([
-    pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at, phone').limit(5000),
+    pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at, phone, phone_verified_at').limit(5000),
     pub.from('app_opens').select('user_id, dia, aberturas').limit(50000),
     pub.from('ai_usage').select('user_id, feature, total_tokens, ok, cost_usd, created_at').gte('created_at', `${since}T00:00:00Z`).limit(50000),
     pub.from('simulations').select('user_id, total_questions, correct_answers, status, started_at').limit(20000),

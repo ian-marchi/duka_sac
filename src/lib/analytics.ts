@@ -35,6 +35,8 @@ export type Pessoa = {
   email: string | null
   /** Telefone do cadastro, cru ("+5538992667095"); null se a pessoa não informou. */
   telefone: string | null
+  /** Data (ISO) em que confirmou o telefone por código; null = não confirmou. */
+  telefoneConfirmadoEm: string | null
   criado: string
   ultAtiv: string | null
   pontos: number
@@ -144,6 +146,7 @@ export function analisar(
       nome: u.full_name?.trim() || u.username || u.email?.split('@')[0] || 'sem nome',
       user: u.username, email: u.email,
       telefone: u.phone?.trim() || null,
+      telefoneConfirmadoEm: u.phone_verified_at ?? null,
       criado: u.created_at.slice(0, 10),
       ultAtiv: u.last_activity_date,
       pontos: u.total_points ?? 0,
