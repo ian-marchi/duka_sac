@@ -11,7 +11,7 @@ const STATUS: Record<string, { label: string; cor: string }> = {
   skipped: { label: 'sem número', cor: 'rgb(var(--muted))' },
   draft:   { label: 'rascunho',  cor: 'rgb(var(--brand))' },
 }
-const TIPO: Record<string, string> = { recebido: 'Entrou em análise', resolvido: 'Resolvido', manual: 'Resposta' }
+const TIPO: Record<string, string> = { recebido: 'Entrou em análise', resolvido: 'Resolvido', manual: 'Resposta', codigo: 'Código de confirmação', atualizacao: 'Aviso de atualização' }
 
 /**
  * Mensagens de WhatsApp ligadas a este ticket (support.whatsapp_outbox,
