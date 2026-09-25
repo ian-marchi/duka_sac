@@ -60,3 +60,6 @@ CLAUDE.md
 # anotações locais (prompts com nomes e telefones)
 data/*.md
 !data/README.md
+
+# Relatorios da rotina diaria de auditoria de questoes (ids e problemas do banco)
+data/auditoria/
