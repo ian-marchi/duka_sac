@@ -12,6 +12,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "whatsapp": "cd ../duka_whas_bot && npm start",
+    "backup": "python scripts/backup_supabase.py",
     "contatos": "python scripts/sync_contatos_whatsapp.py",
     "powerbi": "python scripts/export_powerbi.py"
   },
