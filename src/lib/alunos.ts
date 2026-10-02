@@ -149,7 +149,7 @@ export const ESCOLAS: { casa: RegExp; nome: string; curto: string }[] = [
   { casa: /plinio|normal/,   nome: 'E.E. Prof. Plínio Ribeiro', curto: 'Escola Normal' },
   { casa: /alcides|polivalente/, nome: 'E.E. Prof. Alcides de Carvalho', curto: 'Polivalente' },
   { casa: /atenas/,          nome: 'Colégio Atenas',            curto: 'Atenas' },
-  { casa: /teresinha/,       nome: 'Colégio Santa Teresinha',   curto: 'Santa Teresinha' },
+  { casa: /tere[sz]inha/,     nome: 'Colégio Santa Teresinha',   curto: 'Santa Teresinha' },
   { casa: /etapa/,           nome: 'Pré-vestibular Etapa',      curto: 'Etapa' },
   { casa: /salesian/,        nome: 'Salesianos Santa Rosa',     curto: 'Salesianos' },
 ]
