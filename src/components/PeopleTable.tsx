@@ -17,7 +17,7 @@ const COLS: Col[] = [
   { k: 'tok', t: 'Tokens', r: true },
   { k: 'pontos', t: 'Pontos', r: true },
 ]
-const ORDER: Grupo[] = ['habito', 'testou', 'sessao', 'nunca']
+const ORDER: Grupo[] = ['habito', 'testou', 'sessao', 'parado', 'nunca']
 
 export function PeopleTable({ pessoas, hoje }: { pessoas: Pessoa[]; hoje: string }) {
   const [sort, setSort] = useState<string | null>(null)

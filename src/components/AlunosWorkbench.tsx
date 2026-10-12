@@ -3,7 +3,7 @@ import type { Pessoa } from '@/lib/analytics'
 import { GRUPO_META, DIA_NOME, diffDays } from '@/lib/analytics'
 import type { RelatoriosBase, AlunoDetalhe, Item } from '@/lib/alunosAnalise'
 import { compactNumber, fullNumber } from '@/lib/format'
-import { escolaCurta, type ResumoAlunos } from '@/lib/alunos'
+import { escolaCurta, COMO_LABEL, type ResumoAlunos } from '@/lib/alunos'
 import { formatarTelefone, telefoneDigitos } from '@/lib/aparelho'
 import { Copiar } from '@/components/Copiar'
 
@@ -111,7 +111,7 @@ export function RelatoriosColuna({ r, total, days, hoje, ws }: {
 /** Chips fixos. Os das escolas vêm da planilha do WhatsApp (uma por escola que aparecer). */
 export const FILTROS: { key: string; label: string }[] = [
   { key: 'todos', label: 'Todos' }, { key: 'sumiram', label: 'Sumiram' }, { key: 'habito', label: 'Hábito' },
-  { key: 'nunca', label: 'Nunca abriram' },
+  { key: 'parado', label: 'Pararam' }, { key: 'nunca', label: 'Nunca abriram' },
 ]
 
 export function AlunosLista({ pessoas, selected, f, q, hoje, escolaDe, escolas }: {
@@ -174,7 +174,8 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
   const { p, ws } = d
   const maxCal = Math.max(1, ...d.calendario.map((c) => c.aberturas))
   const nivel = (n: number) => (n === 0 ? 'rgb(var(--border))' : n / maxCal < 0.34 ? '#4A2A6B' : n / maxCal < 0.67 ? '#7D2FA8' : 'rgb(var(--brand))')
-  const esc = ws?.escola ?? (p.escola === 'publica' ? 'Escola pública' : p.escola === 'particular' ? 'Escola particular' : null)
+  const esc = d.origem?.escola ?? ws?.escola ?? (p.escola === 'publica' ? 'Escola pública' : p.escola === 'particular' ? 'Escola particular' : null)
+  const anoOrigem = d.origem?.ano && d.origem.ano !== 'Não informado' ? d.origem.ano : ws?.ano && ws.ano !== 'Não informado' ? ws.ano : null
   const tel = formatarTelefone(d.telefone)
   const telDig = telefoneDigitos(d.telefone)
   const ap = d.aparelho
@@ -208,8 +209,8 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
       <div className="grid gap-3 p-5 lg:grid-cols-2">
         <Card icon="📍" title="De onde veio">
           <dl className="grid grid-cols-[96px_1fr] gap-x-2.5 gap-y-1.5 text-xs">
-            <dt className="text-muted">Escola</dt><dd>{esc ?? '—'}{ws?.ano && ws.ano !== 'Não informado' ? ` · ${ws.ano}` : ''}</dd>
-            <dt className="text-muted">Chegou por</dt><dd>{ws ? `WhatsApp beta (${ws.status})` : 'Fora da planilha do WhatsApp'}</dd>
+            <dt className="text-muted">Escola</dt><dd>{esc ?? '—'}{anoOrigem ? ` · ${anoOrigem}` : ''}{d.origem?.como === 'visita' ? <span className="text-muted"> · estimada pela data da visita</span> : ''}</dd>
+            <dt className="text-muted">Chegou por</dt><dd>{ws ? `WhatsApp beta (${ws.status})` : d.origem?.como === 'visita' ? 'Criou a conta no dia da visita à escola' : 'Fora da planilha do WhatsApp'}{d.origem?.como && d.origem.como !== 'visita' ? <span className="text-muted"> · ligação: {COMO_LABEL[d.origem.como] ?? d.origem.como}</span> : ''}</dd>
             <dt className="text-muted">Cadastro</dt><dd>{p.criado.split('-').reverse().join('/')} · onboarding {p.onboarding ? 'completo' : 'incompleto'}</dd>
             <dt className="text-muted">Objetivo</dt><dd>{[p.exame?.toUpperCase(), p.curso].filter(Boolean).join(' · ') || '—'}</dd>
             <dt className="text-muted">Idade</dt><dd>{p.idade ?? '—'}</dd>

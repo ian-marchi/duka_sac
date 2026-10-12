@@ -12,7 +12,7 @@ export const DIA_NOME: Record<Dia, string> = {
   seg: 'Segunda', ter: 'Terça', qua: 'Quarta', qui: 'Quinta', sex: 'Sexta', sab: 'Sábado', dom: 'Domingo',
 }
 
-export type Grupo = 'habito' | 'testou' | 'sessao' | 'nunca'
+export type Grupo = 'habito' | 'testou' | 'sessao' | 'parado' | 'nunca'
 export const GRUPO_META: Record<Grupo, { titulo: string; sub: string; desc: string; cor: string; tag: string }> = {
   habito: { titulo: 'Criaram hábito', sub: '5 ou mais dias com o app aberto', tag: 'Hábito',
             desc: 'Cinco ou mais dias distintos com o app aberto. Concentram a maior parte das aberturas e quase todo o uso de IA.',
@@ -23,8 +23,11 @@ export const GRUPO_META: Record<Grupo, { titulo: string; sub: string; desc: stri
   sessao: { titulo: 'Abriram uma vez só', sub: '1 único dia', tag: '1 sessão',
             desc: 'Um único dia de uso e nunca mais voltaram. É onde está a maior perda em número de pessoas.',
             cor: 'rgb(201 130 26)' },
-  nunca:  { titulo: 'Nunca abriram o app', sub: 'sem registro em app_opens', tag: 'Nunca abriu',
-            desc: 'Existe cadastro na base, mas nenhuma abertura registrada. Contas que nunca viram o produto.',
+  parado: { titulo: 'Pararam de abrir', sub: 'abriram antes, nada nos últimos 14 dias', tag: 'Parou',
+            desc: 'Já usaram o app em algum momento, mas não abriram nenhum dia do período. Os pontos são de antes.',
+            cor: 'rgb(120 113 150)' },
+  nunca:  { titulo: 'Nunca abriram o app', sub: 'nenhuma abertura, em época nenhuma', tag: 'Nunca abriu',
+            desc: 'Existe cadastro na base, mas nenhuma abertura registrada em nenhuma época. Contas que nunca viram o produto.',
             cor: 'rgb(200 30 99)' },
 }
 
@@ -99,8 +102,13 @@ export const hojeSP = () =>
 /** 'seg'…'dom' de uma data ISO. JS: 0=dom … 6=sáb. */
 export const dowPt = (iso: string): Dia => DIAS[(new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7]
 
-export function grupoDe(diasAt: number): Grupo {
-  if (diasAt === 0) return 'nunca'
+/**
+ * `diasAt` é do PERÍODO (14 dias); `ultAb` é de qualquer época. Antes, quem tinha
+ * 17 mil pontos e não abriu nos últimos 14 dias aparecia como "Nunca abriu" no
+ * ranking (12/10, Cristiano). Agora isso é "Parou"; "Nunca" é nunca mesmo.
+ */
+export function grupoDe(diasAt: number, ultAb: string | null = null): Grupo {
+  if (diasAt === 0) return ultAb ? 'parado' : 'nunca'
   if (diasAt >= 5) return 'habito'
   if (diasAt >= 2) return 'testou'
   return 'sessao'
@@ -162,7 +170,7 @@ export function analisar(
       custo: us.reduce((s, x) => s + (x.cost_usd ?? 0), 0),
       planDias, planHoras, esp, cump, extra,
       diasCump: DIAS.filter((d) => diasCumpSet.has(d)),
-      grupo: grupoDe(diasSet.size),
+      grupo: grupoDe(diasSet.size, ultAb),
     }
   }).filter((p) => !p.teste)
 
@@ -179,7 +187,7 @@ export function analisar(
   const somaCusto = pessoas.reduce((s, p) => s + p.custo, 0)
   const falhasIA = usage.filter((x) => !x.ok && x.created_at.slice(0, 10) > since).length
 
-  const grupos: Record<Grupo, Pessoa[]> = { habito: [], testou: [], sessao: [], nunca: [] }
+  const grupos: Record<Grupo, Pessoa[]> = { habito: [], testou: [], sessao: [], parado: [], nunca: [] }
   for (const p of pessoas) grupos[p.grupo].push(p)
   for (const g of Object.keys(grupos) as Grupo[]) grupos[g].sort((a, b) => b.ab - a.ab || b.ia - a.ia)
 

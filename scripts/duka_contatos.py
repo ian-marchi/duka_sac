@@ -133,7 +133,10 @@ def casar(u, nomeados):
     A = tokens(u.get("full_name") or "")
     if not A: return None, None
     ex = [a for a in nomeados if a["_t"] == A]
-    if len(ex) == 1: return ex[0], "exata"
+    if len(ex) == 1:
+        # Nome de UMA palavra ("Pedro") só vale se a conta diz tipo de escola ou ano e isso não contradiz.
+        if len(A) >= 2: return ex[0], "exata"
+        if (u.get("school_type") or u.get("school_year")) and compativel(u, ex[0]): return ex[0], "nome"
     cand = [a for a in nomeados if compativel(u, a)]
     if len(A) >= 2:
         pa = [a for a in cand if subseq(A, a["_t"]) or (len(a["_t"]) >= 2 and subseq(a["_t"], A))]

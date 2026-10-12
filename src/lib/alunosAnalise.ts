@@ -2,7 +2,7 @@ import type { Analise, Pessoa, Dia } from './analytics'
 import { DIAS, GRUPO_META, addDays, diffDays, dowPt, type Grupo } from './analytics'
 import type { AppOpen, AiUsageRow } from './types'
 import { featureLabel } from './types'
-import type { Aluno, ResumoAlunos } from './alunos'
+import type { Aluno, ResumoAlunos, ContaOrigem } from './alunos'
 import { montarAparelho, type Aparelho, type UserDevice, type PushTokenLite } from './aparelho'
 
 /**
@@ -42,6 +42,8 @@ export type RelatoriosBase = {
 export type AlunoDetalhe = {
   p: Pessoa
   ws: Aluno | null
+  /** Escola/ano/canal da conta por qualquer ponte (contatos, manual, visita). */
+  origem: ContaOrigem | null
   calendario: { dia: string; aberturas: number }[]   // últimos 14 dias, do mais antigo ao mais novo
   recursos: Item[]
   simulados: { n: number; acerto: number | null }
@@ -142,6 +144,7 @@ export function detalheAluno(
   return {
     p,
     ws: ws.alunos.find((al) => al.conta?.id === p.id) ?? null,
+    origem: ws.contas[p.id] ?? null,
     calendario,
     recursos: recursosDe(meuUso, meusSims, minhasRed),
     simulados: { n: meusSims.length, acerto: acertoMedio(meusSims) },

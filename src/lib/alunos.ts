@@ -77,6 +77,16 @@ export type OrigemManual = {
   escola: string | null; ano: string | null; cidade: string | null; estado: string | null; curso: string | null; observacao: string | null
 }
 
+/** Dias em que a equipe foi à escola: conta criada nesses dias sem outra pista = aluno de lá. */
+export const VISITAS: { dias: string[]; escola: string }[] = [
+  { dias: ['2026-09-16', '2026-09-17'], escola: 'E.E. Prof. Plínio Ribeiro' },
+  { dias: ['2026-09-18'], escola: 'Colégio Atenas' },
+]
+export const COMO_LABEL: Record<string, string> = {
+  telefone: 'telefone do cadastro', exata: 'nome igual', nome: 'primeiro nome + escola/ano compatíveis', parcial: 'nome parecido', usuario: 'pelo @usuário',
+  perfil: 'primeiro nome + escola/ano', manual: 'ligado à mão', planilha: 'planilha do WhatsApp', visita: 'estimada pela data da visita à escola',
+}
+
 export const CANAL_LABEL: Record<ContaOrigem['canal'], string> = {
   whatsapp: 'WhatsApp', direto: 'Contato direto', indicacao: 'Indicação', outro: 'Outro',
 }
@@ -326,8 +336,8 @@ export function resumirAlunos(
   }
   // 2. telefone do cadastro
   for (const p of pessoas) liga(porTelefone.get(telefoneNorm(pontes.telefones?.get(p.id))), p)
-  // 3. nome igual
-  base.alunos.forEach((a, i) => { const n = semAcento(a.nome); if (n) liga(i, porNome.get(n)) })
+  // 3. nome igual — só nome com 2+ palavras. "Pedro" = "Pedro" não prova nada (12/10).
+  base.alunos.forEach((a, i) => { const n = semAcento(a.nome); if (n && n.includes(' ')) liga(i, porNome.get(n)) })
 
   const alunos = base.alunos.map((a, i) => {
     const p = contaDe.get(i)
@@ -342,6 +352,16 @@ export function resumirAlunos(
       escola: o.escola ? escolaDe(o.escola) : 'Contato direto',
       ano: o.ano ?? 'Não informado', como: 'manual', canal: o.canal, cidade: o.cidade, curso: o.curso,
     }
+  }
+
+  // 5. pela data da VISITA à escola (Cristiano, 12/10): quem criou conta em 16–17/09 e não casou
+  //    com nada veio da Escola Normal (fomos lá dia 16); 18/09 foi o Atenas. Marcado como 'visita'
+  //    pra ficar claro que é estimativa.
+  for (const p of pessoas) {
+    if (contas[p.id]) continue
+    const dia = (p.criado ?? '').slice(0, 10)
+    const v = VISITAS.find((x) => x.dias.includes(dia))
+    if (v) contas[p.id] = { escola: v.escola, ano: 'Não informado', como: 'visita', canal: 'direto' }
   }
 
   const conta = (f: (a: Aluno) => boolean) => alunos.filter(f).length
