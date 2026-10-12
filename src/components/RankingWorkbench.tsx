@@ -5,6 +5,10 @@ import { PerfilPopup, type PerfilResumo } from '@/components/PerfilPopup'
 export type Linha = {
   id: string; nome: string; user: string | null; pontos: number; ofensiva: number; maiorOfensiva: number
   diasAt: number; ultAb: string | null; grupo: Grupo
+  /** O que a pessoa FEZ nos últimos 14 dias (DUKA 8, 12/10): simulados/provas, redações, dias do plano cumpridos. */
+  sims14: number; red14: number; planoCump: number; planoEsp: number
+  /** fez simulado/prova, redação ou cumpriu dia do plano no período */
+  estudou: boolean
   escola: string; escolaCurta: string; escolaSlug: string; ano: string; canal: string; canalLabel: string
   posicao?: number
 }
@@ -153,14 +157,14 @@ export function RankingLista({ lista, filtros, opcoes, perfis, hoje }: {
         <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
           <span className="kicker mr-1">Frequência</span>
           {(Object.keys(GRUPO_META) as Grupo[]).map((g) => chip(filtros.grupo === g, href(filtros, { grupo: filtros.grupo === g ? '' : g }), GRUPO_META[g].tag, GRUPO_META[g].sub))}
-          {chip(filtros.ativos, href(filtros, { ativos: !filtros.ativos }), 'Só quem abriu nos últimos 14 dias')}
+          {chip(filtros.ativos, href(filtros, { ativos: !filtros.ativos }), 'Só quem estudou nos últimos 14 dias', 'fez simulado, prova, redação ou cumpriu dia do plano de estudos')}
         </div>
       </div>
       <div className="flex-1 overflow-auto">
         {lista.length === 0 && <div className="p-10 text-center text-sm text-muted">Ninguém com esse filtro.</div>}
         <table className="w-full text-[12px]">
           <thead className="sticky top-0 bg-bg text-left text-[10px] uppercase tracking-wide text-muted">
-            <tr><th className="px-3 py-2 text-right">#</th><th className="px-2 py-2">Aluno</th><th className="px-2 py-2 text-right">Pontos</th><th className="px-2 py-2 text-right">Ofensiva</th><th className="px-2 py-2">Escola</th><th className="px-2 py-2">Ano</th><th className="px-2 py-2">Frequência</th><th className="px-2 py-2">Última abertura</th><th className="px-2 py-2"></th></tr>
+            <tr><th className="px-3 py-2 text-right">#</th><th className="px-2 py-2">Aluno</th><th className="px-2 py-2 text-right">Pontos</th><th className="px-2 py-2 text-right">Ofensiva</th><th className="px-2 py-2">Escola</th><th className="px-2 py-2">Ano</th><th className="px-2 py-2">Frequência</th><th className="px-2 py-2">Estudou (14d)</th><th className="px-2 py-2">Última abertura</th><th className="px-2 py-2"></th></tr>
           </thead>
           <tbody>
             {lista.map((l, i) => (
@@ -177,6 +181,11 @@ export function RankingLista({ lista, filtros, opcoes, perfis, hoje }: {
                 <td className="px-2 py-1.5 text-fg2" title={l.escola}>{l.escolaCurta}</td>
                 <td className="px-2 py-1.5 text-fg2">{l.ano}</td>
                 <td className="px-2 py-1.5"><span className="rounded-full px-2 py-0.5 font-display text-[10px] font-extrabold text-white" style={{ background: GRUPO_META[l.grupo].cor }}>{GRUPO_META[l.grupo].tag}</span> <span className="text-[11px] text-muted">{l.diasAt}d</span></td>
+                <td className="px-2 py-1.5 text-[11px]" title="simulados e provas · redações · dias do plano cumpridos, nos últimos 14 dias">
+                  {l.estudou
+                    ? <span className="text-fg2">{[l.sims14 ? `${l.sims14} sim.` : '', l.red14 ? `${l.red14} red.` : '', l.planoEsp ? `plano ${l.planoCump}/${l.planoEsp}` : ''].filter(Boolean).join(' · ')}</span>
+                    : <span className="text-muted">{l.diasAt > 0 ? 'só abriu' : '—'}</span>}
+                </td>
                 <td className="px-2 py-1.5 text-[11px] text-muted">{l.ultAb ? `há ${diffDays(l.ultAb, hoje)}d` : 'nunca'}</td>
                 <td className="px-2 py-1.5">{perfis[l.id] && <PerfilPopup p={perfis[l.id]} rotulo="ver" />}</td>
               </tr>

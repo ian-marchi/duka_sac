@@ -24,13 +24,16 @@ export default async function RankingPage({ searchParams }: { searchParams: Prom
   const days = 14
   const since = addDays(hoje, -days)
 
-  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: scanLinhas }, { data: contatos }, { data: origens }] = await Promise.all([
+  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: scanLinhas }, { data: contatos }, { data: origens }, { data: sims }, { data: essays }] = await Promise.all([
     pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, longest_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, school_year, weekly_availability, created_at, phone').limit(5000),
     pub.from('app_opens').select('user_id, dia, aberturas').limit(50000),
     pub.from('ai_usage').select('user_id, feature, total_tokens, ok, cost_usd, created_at').gte('created_at', `${since}T00:00:00Z`).limit(50000),
     supabase.from('alunos_whatsapp').select('telefone, contato, nome, telefone_informado, escola_bruta, ano_bruto, status, observacao, cadastrado_no_bot, registrado_no_app, ultima_msg, atualizado_em').limit(10000),
     supabase.from('contatos_whatsapp').select('user_id, telefone, escola, ano, como').limit(5000),
     supabase.from('alunos_origem').select('user_id, canal, escola, ano, cidade, estado, curso, observacao').limit(5000),
+    // DUKA 8: o que a pessoa fez de verdade no período (simulados/provas e redações)
+    pub.from('simulations').select('user_id, started_at').gte('started_at', `${since}T00:00:00Z`).limit(20000),
+    pub.from('essays').select('user_id, created_at').gte('created_at', `${since}T00:00:00Z`).limit(20000),
   ])
   if (uErr) return <div className="p-6 text-sm text-muted">Não consegui ler <code>public.users</code>: {uErr.message}</div>
 
@@ -47,6 +50,8 @@ export default async function RankingPage({ searchParams }: { searchParams: Prom
     { contatos: (contatos ?? []) as ContatoWs[], telefones, origens: (origens ?? []) as OrigemManual[] },
   )
   const wsPorConta = new Map(ws.alunos.filter((al) => al.conta).map((al) => [al.conta!.id, al]))
+  const sims14 = new Map<string, number>(); for (const s of (sims ?? []) as { user_id: string }[]) sims14.set(s.user_id, (sims14.get(s.user_id) ?? 0) + 1)
+  const red14 = new Map<string, number>(); for (const e of (essays ?? []) as { user_id: string }[]) red14.set(e.user_id, (red14.get(e.user_id) ?? 0) + 1)
 
   // uma linha por conta, já com tudo que os filtros e a tabela precisam
   const todas: Linha[] = a.pessoas.map((p) => {
@@ -59,6 +64,8 @@ export default async function RankingPage({ searchParams }: { searchParams: Prom
     return {
       id: p.id, nome: p.nome, user: p.user, pontos: p.pontos, ofensiva: u?.current_streak ?? 0, maiorOfensiva: u?.longest_streak ?? 0,
       diasAt: p.diasAt, ultAb: p.ultAb, grupo: p.grupo,
+      sims14: sims14.get(p.id) ?? 0, red14: red14.get(p.id) ?? 0, planoCump: p.cump, planoEsp: p.esp,
+      estudou: (sims14.get(p.id) ?? 0) > 0 || (red14.get(p.id) ?? 0) > 0 || p.cump > 0,
       escola, escolaCurta: escolaCurta(escola), escolaSlug: escolaSlug(escola), ano, canal, canalLabel: CANAL_LABEL[canal as keyof typeof CANAL_LABEL] ?? 'Outro caminho',
     }
   }).sort((x, y) => y.pontos - x.pontos || y.diasAt - x.diasAt)
@@ -70,7 +77,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Prom
     (!filtros.ano || l.ano === filtros.ano) &&
     (!filtros.canal || l.canal === filtros.canal) &&
     (!filtros.grupo || l.grupo === filtros.grupo) &&
-    (!filtros.ativos || l.diasAt > 0) &&
+    (!filtros.ativos || l.estudou) &&
     (!nq || semAcento(`${l.nome} ${l.user ?? ''} ${l.escola}`).includes(nq)),
   )
 
