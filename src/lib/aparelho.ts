@@ -113,6 +113,18 @@ function sistemaDe(platform: string | null, os: string | null): string | null {
   return platform
 }
 
+/**
+ * Canal curto pra tag na tabela: App Store (loja + iOS), Play Store (loja + Android),
+ * Beta (TestFlight/APK), Dev. É o que separa quem baixou na loja de quem veio do beta.
+ */
+export type CanalCurto = 'appstore' | 'playstore' | 'beta' | 'dev'
+export function canalCurto(dev: UserDevice | null | undefined): { key: CanalCurto; label: string } | null {
+  if (!dev?.canal) return null
+  if (dev.canal === 'loja') return dev.platform === 'ios' ? { key: 'appstore', label: 'App Store' } : { key: 'playstore', label: 'Play Store' }
+  if (dev.canal === 'beta') return { key: 'beta', label: 'Beta' }
+  return { key: 'dev', label: 'Dev' }
+}
+
 export const CANAL_APARELHO: Record<'beta' | 'loja' | 'dev', string> = {
   beta: 'Beta (TestFlight / APK)',
   loja: 'Loja (App Store / Play Store)',

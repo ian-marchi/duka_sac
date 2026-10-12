@@ -64,6 +64,52 @@ def ler_planilha(caminho=CSV_PADRAO):
             })
     return alunos
 
+def telefone_canonico(s):
+    """55 + DDD + 9 + 8 dígitos (igual ao telefoneNorm do painel). Vazio se não parece telefone."""
+    d = re.sub(r"\D", "", s or "").lstrip("0")
+    if not d: return ""
+    if len(d) in (10, 11) and not d.startswith("55"): d = "55" + d
+    if len(d) == 12 and d[4] in "6789": d = d[:4] + "9" + d[4:]
+    return d if 12 <= len(d) <= 13 else d
+
+def escola_de(bruta):
+    esc = norm(bruta or "")
+    if not esc: return ""
+    if "plinio" in esc or "normal" in esc: return "E.E. Prof. Plínio Ribeiro"
+    if "alcides" in esc or "polivalente" in esc: return "E.E. Prof. Alcides de Carvalho"
+    if "atenas" in esc: return "Colégio Atenas"
+    if "teresinha" in esc or "terezinha" in esc: return "Colégio Santa Teresinha"
+    if "etapa" in esc: return "Pré-vestibular Etapa"
+    if "salesian" in esc: return "Salesianos Santa Rosa"
+    limpo = re.sub(r"\s+", " ", (bruta or "").strip())
+    return limpo[:1].upper() + limpo[1:] if len(limpo) > 2 else "Outra"
+
+def ano_de(ano_bruto, obs):
+    ano_b = norm(ano_bruto or ""); o = norm(obs or "")
+    if "professor" in ano_b or "e professor" in o: return "Professor(a)"
+    if re.search(r"1|primeiro|1º|1°|1-", ano_b): return "1º ano"
+    if re.search(r"2|segundo|2º|2°|2•", ano_b): return "2º ano"
+    if re.search(r"3|terceiro|3º|3°|3•", ano_b): return "3º ano"
+    return "Não informado"
+
+def linhas_do_banco(rows):
+    """Mesma forma de ler_planilha, mas a partir de support.alunos_whatsapp (o scan)."""
+    alunos = []
+    for r in rows:
+        nome = (r.get("nome") or "").strip()
+        st = norm(r.get("status") or "")
+        status = "Respondeu" if st.startswith("respondeu") else "Sem dados" if "sem dados" in st else "Não respondeu"
+        tel = (r.get("telefone") or "").strip()
+        alunos.append({
+            "nome": nome, "escola": escola_de(r.get("escola_bruta")) if nome else "", "escola_original": r.get("escola_bruta") or "",
+            "ano": ano_de(r.get("ano_bruto"), r.get("observacao")) if nome else "", "ano_original": r.get("ano_bruto") or "",
+            "status": status, "observacao": r.get("observacao") or "",
+            "contato": tel if tel.startswith("+") else ("+" + tel if tel else ""),
+            "telefone_informado": (r.get("telefone_informado") or "").strip(),
+            "user_id": None, "como": None, "_t": tokens(nome),
+        })
+    return alunos
+
 def ler_overrides(caminho=OVERRIDES_PADRAO):
     manual = {}
     p = Path(caminho)

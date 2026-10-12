@@ -1,28 +1,31 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import type { AppUser, AppOpen, AiUsageRow } from '@/lib/types'
-import { analisar, addDays, hojeSP, diffDays } from '@/lib/analytics'
-import { carregarAlunos, alunosDeLinhas, resumirAlunos, semAcento, type LinhaScan, type ContatoWs, type OrigemManual, escolasDasContas } from '@/lib/alunos'
+import { analisar, addDays, hojeSP, GRUPO_META } from '@/lib/analytics'
+import { carregarAlunos, alunosDeLinhas, resumirAlunos, escolaCurta, type LinhaScan, type ContatoWs, type OrigemManual } from '@/lib/alunos'
 import { relatoriosBase, detalheAluno, type SimRow, type EssayRow, type TicketLite, type FontesAparelho } from '@/lib/alunosAnalise'
-import type { UserDevice, PushTokenLite } from '@/lib/aparelho'
-import { RelatoriosColuna, AlunosLista, AlunoDetalheView } from '@/components/AlunosWorkbench'
+import { canalCurto, type UserDevice, type PushTokenLite } from '@/lib/aparelho'
+import { RelatoriosColuna, AlunoDetalheView } from '@/components/AlunosWorkbench'
+import { AlunosTabela, type LinhaAluno } from '@/components/AlunosTabela'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Mesa de alunos (desenho F): três colunas fixas.
+ * Mesa de alunos (desenho F, revisto em 12/10/2026):
  *   1. os três relatórios da base inteira (de onde vêm, frequência, uso)
- *   2. lista de alunos com busca (`?q=`) e filtros (`?f=`)
+ *   2. a TABELA das contas com a cara da planilha do WhatsApp: escola, ano, canal
+ *      (App Store / Play Store / Beta), o que aconteceu no WhatsApp, quando entrou
+ *      no app, 1ª mensagem e último aviso, último uso — tudo com filtro tipo Excel
  *   3. os mesmos três relatórios só do aluno selecionado (`?u=id`)
  */
-export default async function AlunosPage({ searchParams }: { searchParams: Promise<{ u?: string; f?: string; q?: string }> }) {
-  const { u = null, f = 'todos', q = '' } = await searchParams
+export default async function AlunosPage({ searchParams }: { searchParams: Promise<{ u?: string; q?: string }> }) {
+  const { u = null, q = '' } = await searchParams
   const supabase = await supabaseServer()
   const pub = supabase.schema('public')
   const hoje = hojeSP()
   const days = 14
   const since = addDays(hoje, -days)
 
-  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: contatos }, { data: origens }, { data: devices }, { data: pushes }] = await Promise.all([
+  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: contatos }, { data: origens }, { data: devices }, { data: pushes }, { data: avisos }] = await Promise.all([
     pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at, phone, phone_verified_at').limit(5000),
     pub.from('app_opens').select('user_id, dia, aberturas').limit(50000),
     pub.from('ai_usage').select('user_id, feature, total_tokens, ok, cost_usd, created_at').gte('created_at', `${since}T00:00:00Z`).limit(50000),
@@ -30,12 +33,14 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     pub.from('essays').select('user_id, created_at').limit(20000),
     supabase.from('tickets').select('id, ref, apelido, title, priority, status, user_id, created_at, platform, os_version, device_model, app_version').limit(5000),
     // planilha do WhatsApp (migration 089): o que o scan gravou
-    supabase.from('alunos_whatsapp').select('telefone, contato, nome, telefone_informado, escola_bruta, ano_bruto, status, observacao, cadastrado_no_bot, registrado_no_app, ultima_msg, atualizado_em').limit(10000),
+    supabase.from('alunos_whatsapp').select('telefone, contato, nome, telefone_informado, escola_bruta, ano_bruto, status, observacao, cadastrado_no_bot, registrado_no_app, primeira_msg, ultima_msg, atualizado_em').limit(10000),
     supabase.from('contatos_whatsapp').select('user_id, telefone, escola, ano, como').limit(5000),
     supabase.from('alunos_origem').select('user_id, canal, escola, ano, cidade, estado, curso, observacao').limit(5000),
     // aparelho atual de cada conta (migration 100) + versão de quem aceitou push (fallback)
     pub.from('user_devices').select('user_id, platform, os_version, device_model, device_id, device_name, app_version, build, runtime_version, canal, updates_channel, first_seen_at, updated_at').limit(5000),
     pub.from('push_tokens').select('user_id, platform, app_version, updated_at').limit(5000),
+    // avisos que o bot já mandou (fila do WhatsApp): o último enviado por conta
+    supabase.from('whatsapp_outbox').select('user_id, tipo, enviado_em').eq('status', 'sent').not('user_id', 'is', null).limit(10000),
   ])
   if (uErr) {
     return <div className="p-6 text-sm text-muted">Não consegui ler <code>public.users</code>: {uErr.message}</div>
@@ -51,7 +56,6 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     a.pessoas,
     { contatos: (contatos ?? []) as ContatoWs[], telefones, origens: (origens ?? []) as OrigemManual[] },
   )
-  const escolasChips = escolasDasContas(ws.contas)
   const simsR = (sims ?? []) as SimRow[]
   const essR = (essays ?? []) as EssayRow[]
   const tkR = (tickets ?? []) as TicketLite[]
@@ -60,7 +64,6 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
 
   const base = relatoriosBase(a, opensR, usageR, simsR, essR, ws)
   const wsPorConta = new Map(ws.alunos.filter((al) => al.conta).map((al) => [al.conta!.id, al]))
-  const escolaDe = (id: string) => ws.contas[id]?.escola ?? wsPorConta.get(id)?.escola ?? null
 
   // Fontes do card "Aparelho e contato": user_devices > push_tokens (o mais
   // recente por conta) > tickets. Telefone: cadastro do app, senão a ponte do WhatsApp.
@@ -71,49 +74,48 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   }
   const telefonesWs = new Map<string, string>()
   for (const c of (contatos ?? []) as ContatoWs[]) if (c.user_id && c.telefone && !telefonesWs.has(c.user_id)) telefonesWs.set(c.user_id, c.telefone)
-  const fontes: FontesAparelho = {
-    devices: new Map(((devices ?? []) as UserDevice[]).map((d) => [d.user_id, d])),
-    push: pushPorConta,
-    telefonesWs,
-  }
-  const telefoneDe = (p: { id: string; telefone: string | null }) => p.telefone ?? telefonesWs.get(p.id) ?? ''
+  const devicesMap = new Map(((devices ?? []) as UserDevice[]).map((d) => [d.user_id, d]))
+  const fontes: FontesAparelho = { devices: devicesMap, push: pushPorConta, telefonesWs }
 
-  // filtro + busca
-  const nq = semAcento(q)
-  let lista = a.pessoas.filter((p) => {
-    if (f === 'sumiram') return p.diasAt >= 2 && p.ultAb && diffDays(p.ultAb, hoje) >= 6
-    if (f === 'habito') return p.grupo === 'habito'
-    if (f === 'nunca') return p.grupo === 'nunca'
-    if (f.startsWith('escola:')) {
-      const e = escolasChips.find((x) => x.slug === f.slice(7))
-      return !!e && escolaDe(p.id) === e.escola
+  // Último aviso enviado pelo bot, por conta.
+  const ultimoAviso = new Map<string, string>()
+  for (const o of (avisos ?? []) as { user_id: string | null; enviado_em: string | null }[]) {
+    if (!o.user_id || !o.enviado_em) continue
+    const atual = ultimoAviso.get(o.user_id)
+    if (!atual || o.enviado_em > atual) ultimoAviso.set(o.user_id, o.enviado_em)
+  }
+
+  // A tabela: uma linha por conta, com tudo que a planilha do WhatsApp sabe sobre ela.
+  const tabela: LinhaAluno[] = a.pessoas.map((p): LinhaAluno => {
+    const c = ws.contas[p.id]
+    const al = wsPorConta.get(p.id)
+    const escola = c?.escola ?? al?.escola ?? null
+    const ano = c?.ano ?? al?.ano ?? null
+    const canal = canalCurto(devicesMap.get(p.id))
+    return {
+      id: p.id, nome: p.nome, user: p.user,
+      escola: escola && escola !== 'Não informada' ? escola : null,
+      escolaCurta: escola && escola !== 'Não informada' ? escolaCurta(escola) : null,
+      ano: ano && ano !== 'Não informado' ? ano : null,
+      canal: canal?.key ?? null, canalLabel: canal?.label ?? null,
+      ws: al ? al.status : 'fora',
+      entrou: p.criado,
+      primeiraMsg: al?.primeiraMsg ?? null,
+      aviso: ultimoAviso.get(p.id) ?? null,
+      ultAb: p.ultAb, diasAt: p.diasAt,
+      grupo: p.grupo, grupoTag: GRUPO_META[p.grupo].tag, grupoCor: GRUPO_META[p.grupo].cor,
+      pontos: p.pontos, onboarding: p.onboarding,
     }
-    return true
-  })
-  // Busca também por telefone (com ou sem +55/espaços) — o suporte chega com o número do WhatsApp na mão.
-  const nqDigitos = q.replace(/\D/g, '')
-  if (nq) lista = lista.filter((p) =>
-    semAcento(`${p.nome} ${p.user ?? ''} ${p.email ?? ''} ${escolaDe(p.id) ?? ''}`).includes(nq)
-    || (nqDigitos.length >= 4 && telefoneDe(p).replace(/\D/g, '').includes(nqDigitos)),
-  )
-  lista.sort((x, y) => y.diasAt - x.diasAt || y.pontos - x.pontos)
+  }).sort((x, y) => y.diasAt - x.diasAt || y.pontos - x.pontos)
 
   const sel = u ? a.pessoas.find((p) => p.id === u) ?? null : null
   const det = sel ? detalheAluno(sel, a, opensR, usageR, simsR, essR, tkR, ws, fontes) : null
 
   return (
-    <div className="grid h-full grid-cols-[318px_360px_minmax(0,1fr)]">
+    <div className={`grid h-full ${det ? 'grid-cols-[318px_minmax(0,1fr)_460px]' : 'grid-cols-[318px_minmax(0,1fr)]'}`}>
       <RelatoriosColuna r={base} total={a.total} days={days} hoje={hoje} ws={ws} />
-      <div className="h-full min-h-0 border-r"><AlunosLista pessoas={lista} selected={u} f={f} q={q} hoje={hoje} escolaDe={escolaDe} escolas={escolasChips} /></div>
-      <div className="h-full min-h-0 overflow-hidden">
-        {det ? <AlunoDetalheView d={det} hoje={hoje} /> : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 p-10 text-center text-muted">
-            <div className="text-4xl">☺</div>
-            <div className="font-display font-bold text-fg">Escolha um aluno na lista</div>
-            <div className="max-w-[36ch] text-xs">Aqui aparecem os mesmos três relatórios, só dele: de onde veio, com que frequência abre o app e o que usa.</div>
-          </div>
-        )}
-      </div>
+      <div className="h-full min-h-0 border-r"><AlunosTabela linhas={tabela} selected={u} hoje={hoje} buscaInicial={q} /></div>
+      {det && <div className="h-full min-h-0 overflow-hidden"><AlunoDetalheView d={det} hoje={hoje} /></div>}
     </div>
   )
 }

@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { STATUS_META, escolaCurta, semAcento, type Aluno, type ResumoAlunos, type ScanRun } from '@/lib/alunos'
 import { ScanAlunos } from '@/components/ScanAlunos'
-import { PerfilPopup, type PerfilResumo } from '@/components/PerfilPopup'
+import type { PerfilResumo } from '@/components/PerfilPopup'
+import { WhatsappTabela, type CanalConta } from '@/components/WhatsappTabela'
 
 /* ── peças ─────────────────────────────────────────────────────────────────── */
 
@@ -127,7 +128,7 @@ export function WhatsappResumo({ ws, scan, f }: { ws: ResumoAlunos; scan: { ulti
 
 /* ── coluna 2: lista ───────────────────────────────────────────────────────── */
 
-export function WhatsappLista({ ws, alunos, f, q, perfis }: { ws: ResumoAlunos; alunos: Aluno[]; f: string; q: string; perfis: Record<string, PerfilResumo> }) {
+export function WhatsappLista({ ws, alunos, f, q, perfis, canais }: { ws: ResumoAlunos; alunos: Aluno[]; f: string; q: string; perfis: Record<string, PerfilResumo>; canais: Record<string, CanalConta> }) {
   const href = (over: Partial<{ f: string; q: string }>) => {
     const p = new URLSearchParams()
     const ff = over.f ?? f, qq = over.q ?? q
@@ -151,35 +152,8 @@ export function WhatsappLista({ ws, alunos, f, q, perfis }: { ws: ResumoAlunos; 
           ))}
         </div>
       </div>
-      <div className="flex-1 overflow-auto">
-        {alunos.length === 0 && <div className="p-10 text-center text-sm text-muted">Ninguém com esse filtro.</div>}
-        <table className="w-full text-[12px]">
-          <thead className="sticky top-0 bg-bg text-left text-[10px] uppercase tracking-wide text-muted">
-            <tr><th className="px-3 py-2">Nome</th><th className="px-2 py-2">Escola</th><th className="px-2 py-2">Ano</th><th className="px-2 py-2">Status</th><th className="px-2 py-2">No app</th><th className="px-2 py-2">Observação</th></tr>
-          </thead>
-          <tbody>
-            {alunos.map((a, i) => (
-              <tr key={`${a.contato}-${i}`} className="border-t border-borderSubtle hover:bg-surface">
-                <td className="px-3 py-1.5">
-                  <div className="font-bold text-fg">{a.nome || <span className="font-normal text-muted">(sem nome)</span>}</div>
-                  <div className="text-[11px] text-muted">{a.contato}</div>
-                </td>
-                <td className="px-2 py-1.5 text-fg2" title={a.escolaBruta}>{a.nome ? escolaCurta(a.escola) : '—'}</td>
-                <td className="px-2 py-1.5 text-fg2">{a.nome ? a.ano : '—'}</td>
-                <td className="px-2 py-1.5"><StatusPill s={a.status} /></td>
-                <td className="px-2 py-1.5">
-                  {a.conta
-                    ? (perfis[a.conta.id]
-                        ? <PerfilPopup p={perfis[a.conta.id]} />
-                        : <Link href={`/alunos?u=${a.conta.id}`} className="chip chip-on">sim</Link>)
-                    : a.nome ? <span className="text-muted">ainda não</span> : <span className="text-muted">—</span>}
-                </td>
-                <td className="max-w-[26ch] truncate px-2 py-1.5 text-[11px] text-muted" title={a.obs}>{a.obs}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Tabela com filtro tipo Excel (clique nos valores) — WhatsappTabela.tsx */}
+      <WhatsappTabela alunos={alunos} total={ws.total} perfis={perfis} canais={canais} />
     </div>
   )
 }

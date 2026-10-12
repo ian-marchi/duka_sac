@@ -34,6 +34,9 @@ export type Aluno = {
   professor: boolean
   status: StatusAluno
   obs: string
+  /** Primeira e última mensagem na conversa do WhatsApp (ISO), do scan. */
+  primeiraMsg: string | null
+  ultimaMsg: string | null
   /** Conta do app com o mesmo nome, se achou. */
   conta: { id: string; nome: string; grupo: Pessoa['grupo']; criado: string } | null
 }
@@ -85,7 +88,7 @@ export function escolasDasContas(contas: Record<string, ContaOrigem>): { escola:
   return [...m.entries()].map(([escola, total]) => ({ escola, curto: escolaCurta(escola), slug: escolaSlug(escola), total })).sort((a, b) => b.total - a.total)
 }
 
-/** Linha de support.contatos_whatsapp: ponte conta ↔ telefone feita pelo cruzamento em camadas (scripts/duka_contatos.py). */
+/** Linha de support.contatos_whatsapp: ponte conta ↔ telefone feita pelo cruzamento em camadas (scripts/sync_contatos_whatsapp.py: telefone > manual > exata > parcial > usuario > perfil). */
 export type ContatoWs = { user_id: string; telefone: string; escola: string | null; ano: string | null; como: string | null }
 
 /**
@@ -224,6 +227,8 @@ export function carregarAlunos(): { alunos: Aluno[]; atualizadoEm: string | null
       professor,
       status: statusDe(col(l, iStatus)),
       obs,
+      primeiraMsg: null,
+      ultimaMsg: null,
       conta: null,
     }
   })
@@ -239,7 +244,7 @@ export function carregarAlunos(): { alunos: Aluno[]; atualizadoEm: string | null
 export type LinhaScan = {
   telefone: string; contato: string | null; nome: string | null; telefone_informado: string | null
   escola_bruta: string | null; ano_bruto: string | null; status: string | null; observacao: string | null
-  cadastrado_no_bot: boolean; registrado_no_app: boolean; ultima_msg: string | null; atualizado_em: string
+  cadastrado_no_bot: boolean; registrado_no_app: boolean; primeira_msg?: string | null; ultima_msg: string | null; atualizado_em: string
 }
 export type ScanRun = {
   id: number; origem: string; status: 'solicitado' | 'rodando' | 'concluido' | 'falhou'
@@ -263,6 +268,8 @@ export function alunosDeLinhas(linhas: LinhaScan[]): { alunos: Aluno[]; atualiza
       professor,
       status: statusDe(l.status ?? (l.nome ? 'respondeu' : 'nao_respondeu')),
       obs,
+      primeiraMsg: l.primeira_msg ?? null,
+      ultimaMsg: l.ultima_msg ?? null,
       conta: null,
     }
   })
