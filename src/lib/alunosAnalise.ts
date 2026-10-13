@@ -13,7 +13,13 @@ import { montarAparelho, type Aparelho, type UserDevice, type PushTokenLite } fr
  */
 
 export type Item = { label: string; value: number }
-export type SimRow = { user_id: string; total_questions: number | null; correct_answers: number | null; status: string | null; started_at: string }
+export type SimRow = {
+  user_id: string; total_questions: number | null; correct_answers: number | null; status: string | null; started_at: string
+  /** vindos da mesa de alunos (113); o resto do painel pode não pedir */
+  points_earned?: number | null; type?: string | null; exam?: string | null; subject?: string | null
+}
+/** Uma linha do extrato de pontos do aluno: o que fez, quando, quanto valeu. */
+export type Lancamento = { dia: string; oque: string; detalhe: string | null; pontos: number | null }
 export type EssayRow = { user_id: string; created_at: string }
 export type TicketLite = {
   id: number; ref: string; apelido: string | null; title: string | null; priority: string; status: string; user_id: string | null; created_at: string
@@ -48,6 +54,10 @@ export type AlunoDetalhe = {
   recursos: Item[]
   simulados: { n: number; acerto: number | null }
   redacoes: number
+  /** Desde o cadastro, não só o período: é o que explica o total de pontos. */
+  totais: { sessoes: number; redacoes: number; acerto: number | null }
+  /** Extrato: lançamentos mais recentes primeiro (sessões, redações, cadastro). */
+  extrato: Lancamento[]
   tickets: TicketLite[]
   diasSemana: number
   /** Telefone (cadastro do app, senão a ponte do WhatsApp), cru. */
@@ -139,8 +149,23 @@ export function detalheAluno(
   const calendario: { dia: string; aberturas: number }[] = []
   for (let i = 13; i >= 0; i--) { const dia = addDays(a.hoje, -i); calendario.push({ dia, aberturas: porDia.get(dia) ?? 0 }) }
   const meuUso = usage.filter((u) => u.user_id === p.id)
-  const meusSims = sims.filter((s) => s.user_id === p.id)
-  const minhasRed = essays.filter((e) => e.user_id === p.id)
+  const todosSims = sims.filter((s) => s.user_id === p.id)
+  const todasRed = essays.filter((e) => e.user_id === p.id)
+  // O card "Uso" fala do PERÍODO (14 dias). O total desde o cadastro vai separado,
+  // senão "2.900 pontos e 0 simulados" parece bug (13/10).
+  const noPeriodo = (iso: string) => iso.slice(0, 10) > a.since && iso.slice(0, 10) <= a.hoje
+  const meusSims = todosSims.filter((s) => noPeriodo(s.started_at))
+  const minhasRed = todasRed.filter((e) => noPeriodo(e.created_at))
+  const extrato: Lancamento[] = [
+    ...todosSims.map((s) => ({
+      dia: s.started_at.slice(0, 10),
+      oque: s.type === 'full' ? 'Simulado completo' : s.exam === 'feed' ? 'Quiz do dia' : 'Prática',
+      detalhe: [s.exam && s.exam !== 'feed' ? s.exam.toUpperCase() : null, s.subject ?? null, s.total_questions ? `${s.correct_answers ?? 0}/${s.total_questions} certas` : null].filter(Boolean).join(' · ') || null,
+      pontos: s.points_earned ?? null,
+    })),
+    ...todasRed.map((e) => ({ dia: e.created_at.slice(0, 10), oque: 'Redação enviada', detalhe: '600 + bônus do dia', pontos: null })),
+    ...(p.onboarding ? [{ dia: p.criado.slice(0, 10), oque: 'Cadastro concluído', detalhe: 'bônus de 1º dia', pontos: 100 }] : []),
+  ].sort((x, y) => y.dia.localeCompare(x.dia))
   return {
     p,
     ws: ws.alunos.find((al) => al.conta?.id === p.id) ?? null,
@@ -149,6 +174,8 @@ export function detalheAluno(
     recursos: recursosDe(meuUso, meusSims, minhasRed),
     simulados: { n: meusSims.length, acerto: acertoMedio(meusSims) },
     redacoes: minhasRed.length,
+    totais: { sessoes: todosSims.length, redacoes: todasRed.length, acerto: acertoMedio(todosSims) },
+    extrato: extrato.slice(0, 12),
     tickets: meusTickets.slice(0, 5),
     diasSemana: p.diasAt / (a.days / 7),
     telefone: p.telefone ?? fontes?.telefonesWs.get(p.id) ?? null,

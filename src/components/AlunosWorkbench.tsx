@@ -258,11 +258,28 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
         </Card>
 
         <Card icon="⚡" title="Uso">
-          {d.recursos.length ? <Bars itens={d.recursos} /> : <p className="text-xs text-muted">Não usou nada no período.</p>}
+          <div className="kicker mb-1">Últimos 14 dias</div>
+          {d.recursos.length ? <Bars itens={d.recursos} /> : <p className="text-xs text-muted">Não usou nada nos últimos 14 dias.</p>}
           <div className="mt-2.5 text-[11px] text-fg2">
-            Simulados: <b>{d.simulados.n}</b>{d.simulados.acerto !== null && <> · acerto <b>{pct(d.simulados.acerto)}</b></>} · Redações: <b>{d.redacoes}</b>
+            Sessões: <b>{d.simulados.n}</b>{d.simulados.acerto !== null && <> · acerto <b>{pct(d.simulados.acerto)}</b></>} · Redações: <b>{d.redacoes}</b>
           </div>
           <div className="kicker mt-1">IA: {p.ia} chamadas · {compactNumber(p.tok)} tokens · US$ {p.custo.toFixed(2)}</div>
+          <div className="mt-3 border-t border-border pt-2 text-[11px] text-fg2">
+            <span className="kicker">Desde o cadastro</span><br />
+            Sessões: <b>{d.totais.sessoes}</b>{d.totais.acerto !== null && <> · acerto <b>{pct(d.totais.acerto)}</b></>} · Redações: <b>{d.totais.redacoes}</b> · Pontos: <b>{p.pontos.toLocaleString('pt-BR')}</b>
+          </div>
+          {d.extrato.length > 0 && (
+            <div className="mt-2 space-y-0.5" title="Sessão: 100/200/350 por acerto (fácil/médio/difícil), 50 por erro; simulado completo: 500 + 80/150/300 por acerto; +100 na 1ª atividade do dia; tudo × multiplicador semanal">
+              <div className="kicker">Extrato de pontos</div>
+              {d.extrato.map((l, i) => (
+                <div key={i} className="flex items-baseline gap-2 text-[11px]">
+                  <span className="font-mono text-muted">{l.dia.slice(5).split('-').reverse().join('/')}</span>
+                  <span className="min-w-0 flex-1 truncate"><b>{l.oque}</b>{l.detalhe ? <span className="text-muted"> · {l.detalhe}</span> : null}</span>
+                  <span className="font-display font-extrabold">{l.pontos === null ? '—' : `+${l.pontos.toLocaleString('pt-BR')}`}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card icon="🎫" title="Tickets dele">

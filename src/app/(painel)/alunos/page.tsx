@@ -30,7 +30,8 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at, phone, phone_verified_at').limit(5000),
     pub.from('app_opens').select('user_id, dia, aberturas').limit(50000),
     pub.from('ai_usage').select('user_id, feature, total_tokens, ok, cost_usd, created_at').gte('created_at', `${since}T00:00:00Z`).limit(50000),
-    pub.from('simulations').select('user_id, total_questions, correct_answers, status, started_at').limit(20000),
+    // 113: o admin passou a enxergar simulations/essays (antes vinha vazio e o card dizia 0 pra todo mundo)
+    pub.from('simulations').select('user_id, total_questions, correct_answers, status, started_at, points_earned, type, exam, subject').limit(20000),
     pub.from('essays').select('user_id, created_at').limit(20000),
     supabase.from('tickets').select('id, ref, apelido, title, priority, status, user_id, created_at, platform, os_version, device_model, app_version').limit(5000),
     // planilha do WhatsApp (migration 089): o que o scan gravou
