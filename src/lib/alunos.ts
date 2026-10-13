@@ -1,11 +1,10 @@
-import fs from 'node:fs'
-import path from 'node:path'
 import type { Pessoa } from './analytics'
 
 /**
  * Lista de alunos abordados no WhatsApp pro teste beta (planilha manual).
  *
- * FONTE: `data/alunos_duka.csv`, na raiz do painel. É um arquivo que o Ian
+ * FONTE: `data/alunos_duka.csv`, na raiz do painel (leitura em `alunosCsv.ts`,
+ * que é só de servidor — este arquivo também é importado por componentes 'use client'). É um arquivo que o Ian
  * mantém à mão — pra atualizar, basta trocar o CSV e recarregar a página; nada
  * fica no banco. Colunas esperadas (cabeçalho da primeira linha):
  *
@@ -192,7 +191,7 @@ export function escolaCurta(nome: string): string {
 /** Slug estável pra URL (`?f=escola:<slug>`). */
 export const escolaSlug = (nome: string) => semAcento(nome).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
-function anoDe(bruto: string, obs: string): { ano: AnoAluno; professor: boolean } {
+export function anoDe(bruto: string, obs: string): { ano: AnoAluno; professor: boolean } {
   const s = semAcento(bruto)
   const o = semAcento(obs)
   if (s.includes('professor') || o.includes('e professor') || o.includes('e professora')) return { ano: 'Professor(a)', professor: true }
@@ -204,46 +203,11 @@ function anoDe(bruto: string, obs: string): { ano: AnoAluno; professor: boolean 
   return { ano: 'Não informado', professor: false }
 }
 
-function statusDe(bruto: string): StatusAluno {
+export function statusDe(bruto: string): StatusAluno {
   const s = semAcento(bruto)
   if (s.startsWith('respondeu')) return 'respondeu'
   if (s.includes('sem dados')) return 'sem_dados'
   return 'nao_respondeu'
-}
-
-// ── carga ───────────────────────────────────────────────────────────────────
-export const ARQUIVO_ALUNOS = path.join(process.cwd(), 'data', 'alunos_duka.csv')
-
-export function carregarAlunos(): { alunos: Aluno[]; atualizadoEm: string | null } {
-  if (!fs.existsSync(ARQUIVO_ALUNOS)) return { alunos: [], atualizadoEm: null }
-  const texto = fs.readFileSync(ARQUIVO_ALUNOS, 'utf8')
-  const [cab, ...linhas] = parseCsv(texto)
-  const idx = (nome: string) => cab.findIndex((c) => semAcento(c) === semAcento(nome))
-  const iContato = idx('Contato WhatsApp'), iNome = idx('Nome'), iTel = idx('Telefone informado')
-  const iEscola = idx('Escola'), iAno = idx('Ano'), iStatus = idx('Status'), iObs = idx('Observação')
-  const col = (l: string[], i: number) => (i >= 0 ? (l[i] ?? '').trim() : '')
-
-  const alunos: Aluno[] = linhas.map((l) => {
-    const anoBruto = col(l, iAno), obs = col(l, iObs)
-    const { ano, professor } = anoDe(anoBruto, obs)
-    return {
-      contato: col(l, iContato),
-      nome: col(l, iNome),
-      telefone: col(l, iTel),
-      escolaBruta: col(l, iEscola),
-      escola: col(l, iNome) ? escolaDe(col(l, iEscola)) : 'Não informada',
-      anoBruto,
-      ano,
-      professor,
-      status: statusDe(col(l, iStatus)),
-      obs,
-      primeiraMsg: null,
-      ultimaMsg: null,
-      conta: null,
-    }
-  })
-  const atualizadoEm = fs.statSync(ARQUIVO_ALUNOS).mtime.toISOString()
-  return { alunos, atualizadoEm }
 }
 
 /**

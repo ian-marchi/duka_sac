@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase/server'
-import { alunosDeLinhas, alunosParaCsv, carregarAlunos, type LinhaScan } from '@/lib/alunos'
+import { alunosDeLinhas, alunosParaCsv, type LinhaScan } from '@/lib/alunos'
+import { carregarAlunos } from '@/lib/alunosCsv'
 
 export const dynamic = 'force-dynamic'
 

@@ -1,7 +1,8 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import type { AppUser, AppOpen, AiUsageRow } from '@/lib/types'
 import { analisar, addDays, hojeSP, GRUPO_META } from '@/lib/analytics'
-import { carregarAlunos, alunosDeLinhas, resumirAlunos, semAcento, escolaCurta, escolaSlug, CANAL_LABEL, type LinhaScan, type ContatoWs, type OrigemManual } from '@/lib/alunos'
+import { alunosDeLinhas, resumirAlunos, semAcento, escolaCurta, escolaSlug, CANAL_LABEL, type LinhaScan, type ContatoWs, type OrigemManual } from '@/lib/alunos'
+import { carregarAlunos } from '@/lib/alunosCsv'
 import { RankingResumo, RankingLista, type Linha, type Filtros } from '@/components/RankingWorkbench'
 import type { PerfilResumo } from '@/components/PerfilPopup'
 
