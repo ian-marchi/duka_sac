@@ -19,6 +19,8 @@ const ITENS: { href: string; label: string; icon: React.ReactNode; match: (p: st
     icon: <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20l1.3-3.9A8 8 0 1 1 8.2 19z"/><path d="M9 9.5c.3 2.6 2.4 4.7 5 5l1.2-1.2-1.8-1.2-1 .6a3.4 3.4 0 0 1-1.6-1.6l.6-1L10.2 8.3z"/></svg> },
   { href: '/ranking',    label: 'Ranking de pontos', match: (p) => p.startsWith('/ranking'),
     icon: <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg> },
+  { href: '/habito',     label: 'Hábito (quem volta, CURR, lembretes)', match: (p) => p.startsWith('/habito'),
+    icon: <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3c1 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3 1-3s0 2 2 2c0-3-1-5 1-8z"/><path d="M5 21h14"/></svg> },
   { href: '/relatorios', label: 'Relatórios', match: (p) => p.startsWith('/relatorios'),
     icon: <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg> },
   { href: '/metricas',   label: 'Métricas', match: (p) => p.startsWith('/metricas'),
