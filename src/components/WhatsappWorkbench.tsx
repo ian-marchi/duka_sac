@@ -47,7 +47,7 @@ export function filtrarWhatsapp(ws: ResumoAlunos, f: string, nq: string): Aluno[
 
 /* ── coluna 1: resumo ──────────────────────────────────────────────────────── */
 
-export function WhatsappResumo({ ws, scan, f }: { ws: ResumoAlunos; scan: { ultimo: ScanRun | null; aberto: ScanRun | null }; f: string }) {
+export function WhatsappResumo({ ws, scan, f, conversas }: { ws: ResumoAlunos; scan: { ultimo: ScanRun | null; aberto: ScanRun | null }; f: string; conversas?: { naoLidas: number; naFila: number } }) {
   const maxEsc = Math.max(1, ...ws.porEscola.map((e) => e.total))
   const maxAno = Math.max(1, ...ws.anos.map((a) => a.value))
   return (
@@ -57,6 +57,15 @@ export function WhatsappResumo({ ws, scan, f }: { ws: ResumoAlunos; scan: { ulti
         <span className="text-xs text-fg2">quem chegou pelo WhatsApp do Duka</span>
       </div>
 
+      {conversas && (
+        <Card icon="📨" title="Conversas" tag="ponte">
+          <div className="flex items-center gap-4 text-[11px]">
+            <div><div className={`font-display text-xl font-extrabold ${conversas.naoLidas ? 'text-p1' : ''}`}>{conversas.naoLidas}</div><div className="kicker">não lidas</div></div>
+            <div><div className={`font-display text-xl font-extrabold ${conversas.naFila ? 'text-p1' : ''}`}>{conversas.naFila}</div><div className="kicker">na fila do bot</div></div>
+            <Link href="/whatsapp/conversas" className="clay ml-auto px-3 py-1 text-[11px]">Abrir conversas</Link>
+          </div>
+        </Card>
+      )}
       <Card icon="💬" title="Scan" tag="planilha">
         <ScanAlunos ultimo={scan.ultimo} aberto={scan.aberto} atualizadoEm={ws.atualizadoEm} total={ws.total} />
       </Card>

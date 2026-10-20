@@ -25,13 +25,16 @@ export default async function WhatsappPage({ searchParams }: { searchParams: Pro
   const pub = supabase.schema('public')
   const hoje = hojeSP()
 
-  const [{ data: users }, { data: opens }, { data: scanLinhas }, { data: scanRuns }, { data: contatos }, { data: devices }] = await Promise.all([
+  const [{ data: users }, { data: opens }, { data: scanLinhas }, { data: scanRuns }, { data: contatos }, { data: devices }, { count: naoLidas }, { count: naFila }] = await Promise.all([
     pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at, phone').limit(5000),
     pub.from('app_opens').select('user_id, dia, aberturas').limit(50000),
     supabase.from('alunos_whatsapp').select('telefone, contato, nome, telefone_informado, escola_bruta, ano_bruto, status, observacao, cadastrado_no_bot, registrado_no_app, primeira_msg, ultima_msg, atualizado_em').limit(10000),
     supabase.from('alunos_scan_runs').select('id, origem, status, solicitado_em, iniciado_em, concluido_em, total, erro').order('id', { ascending: false }).limit(5),
     supabase.from('contatos_whatsapp').select('user_id, telefone, escola, ano, como').limit(5000),
     pub.from('user_devices').select('user_id, platform, os_version, device_model, device_id, device_name, app_version, build, runtime_version, canal, updates_channel, first_seen_at, updated_at').limit(5000),
+    // ponte com o Claude (migration 118): mensagens recebidas não lidas e fila do bot
+    supabase.from('whatsapp_inbox').select('id', { count: 'exact', head: true }).eq('direcao', 'entrada').is('lido_em', null),
+    supabase.from('whatsapp_outbox').select('id', { count: 'exact', head: true }).eq('status', 'queued'),
   ])
   const aparelhos = new Map(((devices ?? []) as UserDevice[]).map((d) => [d.user_id, montarAparelho(d, null, [])]))
   // Canal curto (App Store / Play Store / Beta / Dev) por conta, pra tag na tabela.
@@ -74,7 +77,7 @@ export default async function WhatsappPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="grid h-full grid-cols-[340px_minmax(0,1fr)]">
-      <WhatsappResumo ws={ws} scan={scan} f={f} />
+      <WhatsappResumo ws={ws} scan={scan} f={f} conversas={{ naoLidas: naoLidas ?? 0, naFila: naFila ?? 0 }} />
       <div className="h-full min-h-0"><WhatsappLista ws={ws} alunos={lista} f={f} q={q} perfis={perfis} canais={canais} /></div>
     </div>
   )
