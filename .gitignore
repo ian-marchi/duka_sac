@@ -37,9 +37,8 @@ jarvis-voice/__pycache__/
 .vercel
 
 # dados de alunos (telefone, nome, escola) — NUNCA no GitHub; a fonte é o banco (support.alunos_whatsapp)
-data/*.csv
-data/scan/
-data/exports/
+# Repo público: ignora TUDO em data/ (telefones, tickets, campanha, loja) menos o README.
+data/*
 !data/README.md
 
 # python

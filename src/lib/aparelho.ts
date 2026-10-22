@@ -55,7 +55,7 @@ export type Aparelho = {
   fonte: 'app' | 'push' | 'ticket' | null
 }
 
-/** Telefone do banco ("+5538992667095") → "+55 38 99266-7095". Fora do padrão, devolve como veio. */
+/** Telefone do banco ("+5511999990000") → "+55 11 99999-0000". Fora do padrão, devolve como veio. */
 export function formatarTelefone(t: string | null | undefined): string | null {
   if (!t) return null
   const d = t.replace(/\D/g, '')

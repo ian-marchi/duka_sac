@@ -36,7 +36,7 @@ export type Pessoa = {
   nome: string
   user: string | null
   email: string | null
-  /** Telefone do cadastro, cru ("+5538992667095"); null se a pessoa não informou. */
+  /** Telefone do cadastro, cru ("+5511999990000"); null se a pessoa não informou. */
   telefone: string | null
   /** Data (ISO) em que confirmou o telefone por código; null = não confirmou. */
   telefoneConfirmadoEm: string | null

@@ -102,8 +102,8 @@ export type ContatoWs = { user_id: string; telefone: string; escola: string | nu
 
 /**
  * Forma canônica de um celular brasileiro: 55 + DDD + 9 + 8 dígitos.
- * O WhatsApp mostra números antigos sem o nono dígito ("+55 38 8848-9549") e o
- * aluno digita com ("38 98848-9549") — sem canonizar, os dois nunca casam.
+ * O WhatsApp mostra números antigos sem o nono dígito ("+55 11 3333-4444") e o
+ * aluno digita com ("11 93333-4444") — sem canonizar, os dois nunca casam.
  */
 export function telefoneNorm(s: string | null | undefined): string {
   let d = String(s ?? '').replace(/[^0-9]/g, '')

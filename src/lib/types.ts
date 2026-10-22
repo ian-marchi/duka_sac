@@ -222,7 +222,7 @@ export type AppUser = {
   school_type: string | null
   weekly_availability: Record<string, number[]> | null
   created_at: string
-  /** Telefone informado no cadastro/onboarding ("+5538992667095"), se houver. */
+  /** Telefone informado no cadastro/onboarding ("+5511999990000"), se houver. */
   phone?: string | null
   /** Quando o aluno confirmou o telefone por código (migration 102); null = ainda não. */
   phone_verified_at?: string | null
