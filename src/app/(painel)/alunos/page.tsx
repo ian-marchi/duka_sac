@@ -26,9 +26,11 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
   const days = 14
   const since = addDays(hoje, -days)
 
-  const [{ data: users, error: uErr }, { data: opens }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: contatos }, { data: origens }, { data: devices }, { data: pushes }, { data: avisos }] = await Promise.all([
+  const [{ data: users, error: uErr }, { data: opens }, { data: tempoDiario }, { data: usage }, { data: sims }, { data: essays }, { data: tickets }, { data: scanLinhas }, { data: contatos }, { data: origens }, { data: devices }, { data: pushes }, { data: avisos }] = await Promise.all([
     pub.from('users').select('id, full_name, username, email, premium_status, total_points, current_streak, last_activity_date, onboarding_completed, target_exam, target_course, age, school_type, weekly_availability, created_at, phone, phone_verified_at').limit(5000),
     pub.from('app_opens').select('user_id, dia, aberturas').limit(50000),
+    // 132: tempo dentro do app por dia (view agregada; só versões 1.3.0+ gravam)
+    pub.from('tempo_app_diario').select('user_id, dia, segundos').gte('dia', addDays(hoje, -30)).limit(50000),
     pub.from('ai_usage').select('user_id, feature, total_tokens, ok, cost_usd, created_at').gte('created_at', `${since}T00:00:00Z`).limit(50000),
     // 113: o admin passou a enxergar simulations/essays (antes vinha vazio e o card dizia 0 pra todo mundo)
     pub.from('simulations').select('user_id, total_questions, correct_answers, status, started_at, points_earned, type, exam, subject').limit(20000),
@@ -87,6 +89,17 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     if (!atual || o.enviado_em > atual) ultimoAviso.set(o.user_id, o.enviado_em)
   }
 
+  // Tempo dentro do app (minutos) nos últimos 7 e 30 dias, por conta.
+  const tempo = new Map<string, { min7: number; min30: number }>()
+  const d7 = addDays(hoje, -6)
+  for (const t of (tempoDiario ?? []) as { user_id: string; dia: string; segundos: number }[]) {
+    const atual = tempo.get(t.user_id) ?? { min7: 0, min30: 0 }
+    const min = Math.round(t.segundos / 60)
+    atual.min30 += min
+    if (t.dia >= d7) atual.min7 += min
+    tempo.set(t.user_id, atual)
+  }
+
   // A tabela: uma linha por conta, com tudo que a planilha do WhatsApp sabe sobre ela.
   const tabela: LinhaAluno[] = a.pessoas.map((p): LinhaAluno => {
     const c = ws.contas[p.id]
@@ -107,6 +120,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
       ultAb: p.ultAb, diasAt: p.diasAt,
       grupo: p.grupo, grupoTag: GRUPO_META[p.grupo].tag, grupoCor: GRUPO_META[p.grupo].cor,
       pontos: p.pontos, onboarding: p.onboarding,
+      min7: tempo.get(p.id)?.min7 ?? 0, min30: tempo.get(p.id)?.min30 ?? 0,
     }
   }).sort((x, y) => y.diasAt - x.diasAt || y.pontos - x.pontos)
 
@@ -117,7 +131,7 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
     <div className={`grid h-full ${det ? 'grid-cols-[318px_minmax(0,1fr)_460px]' : 'grid-cols-[318px_minmax(0,1fr)]'}`}>
       <RelatoriosColuna r={base} total={a.total} days={days} hoje={hoje} ws={ws} />
       <div className="h-full min-h-0 border-r"><AlunosTabela linhas={tabela} selected={u} hoje={hoje} buscaInicial={q} /></div>
-      {det && <div className="h-full min-h-0 overflow-hidden"><AlunoDetalheView d={det} hoje={hoje} /></div>}
+      {det && <div className="h-full min-h-0 overflow-hidden"><AlunoDetalheView d={det} hoje={hoje} tempo={tempo.get(det.p.id) ?? null} /></div>}
     </div>
   )
 }

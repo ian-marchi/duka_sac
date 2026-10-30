@@ -170,7 +170,10 @@ export function AlunosLista({ pessoas, selected, f, q, hoje, escolaDe, escolas }
 
 /* ── coluna 3: uma pessoa ──────────────────────────────────────────────────── */
 
-export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string }) {
+/** 95 → "1h35", 12 → "12 min". */
+const fmtMin = (m: number) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`)
+
+export function AlunoDetalheView({ d, hoje, tempo = null }: { d: AlunoDetalhe; hoje: string; tempo?: { min7: number; min30: number } | null }) {
   const { p, ws } = d
   const maxCal = Math.max(1, ...d.calendario.map((c) => c.aberturas))
   const nivel = (n: number) => (n === 0 ? 'rgb(var(--border))' : n / maxCal < 0.34 ? '#4A2A6B' : n / maxCal < 0.67 ? '#7D2FA8' : 'rgb(var(--brand))')
@@ -250,6 +253,9 @@ export function AlunoDetalheView({ d, hoje }: { d: AlunoDetalhe; hoje: string })
             <div><div className="font-display text-xl font-extrabold leading-none">{br1(d.diasSemana)}</div><div className="kicker">dias/semana</div></div>
             <div><div className="font-display text-xl font-extrabold leading-none">{p.ab}</div><div className="kicker">aberturas</div></div>
             <div><div className={`font-display text-xl font-extrabold leading-none ${p.esp && p.cump === p.esp ? 'text-ok' : ''}`}>{p.esp ? `${p.cump}/${p.esp}` : '—'}</div><div className="kicker">dias do plano cumpridos</div></div>
+          </div>
+          <div className="kicker mt-2" title="soma das sessões com o app em primeiro plano (só versões 1.3.0+ do app gravam)">
+            ⏱️ Tempo no app: {tempo && tempo.min30 > 0 ? `${fmtMin(tempo.min7)} nos últimos 7 dias · ${fmtMin(tempo.min30)} nos últimos 30` : 'sem medição ainda (precisa da versão 1.3.0)'}
           </div>
           <div className="kicker mt-2">
             {p.planDias.length ? `Plano: ${p.planDias.map((x) => DIA_NOME[x]).join(', ')} · ${p.planHoras}h/semana` : 'Sem plano de estudos montado'}

@@ -35,6 +35,9 @@ export type LinhaAluno = {
   grupoCor: string
   pontos: number
   onboarding: boolean
+  /** Minutos dentro do app nos últimos 7 e 30 dias (migration 132; 0 em versão antiga do app). */
+  min7: number
+  min30: number
 }
 
 const COLUNAS: Record<string, string> = { escola: 'Escola', ano: 'Ano', canal: 'Canal', ws: 'WhatsApp', grupo: 'Grupo', onboarding: 'Cadastro' }
@@ -44,6 +47,8 @@ const CANAL_COR: Record<CanalCurto, string> = { appstore: 'rgb(14 148 105)', pla
 
 const dm = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split('-').reverse().slice(0, 2).join('/') : null)
 const dmy = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : null)
+/** 95 → "1h35", 12 → "12min", 0 → "—". */
+const fmtMin = (m: number) => (m <= 0 ? null : m < 60 ? `${m}min` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`)
 const diasDesde = (iso: string | null, hoje: string) => (iso ? Math.round((Date.parse(hoje) - Date.parse(iso.slice(0, 10))) / 86_400_000) : null)
 
 export function AlunosTabela({ linhas, selected, hoje, buscaInicial = '' }: { linhas: LinhaAluno[]; selected: string | null; hoje: string; buscaInicial?: string }) {
@@ -61,6 +66,8 @@ export function AlunosTabela({ linhas, selected, hoje, buscaInicial = '' }: { li
       case 'diasAt': return l.diasAt
       case 'grupo': return l.grupo
       case 'pontos': return l.pontos
+      case 'min7': return l.min7
+      case 'min30': return l.min30
       case 'onboarding': return l.onboarding ? 'completo' : 'incompleto'
       default: return null
     }
@@ -97,6 +104,7 @@ export function AlunosTabela({ linhas, selected, hoje, buscaInicial = '' }: { li
               <Th col="primeiraMsg" ordem={fx.ordem} onClick={fx.ordenar}>1ª msg</Th>
               <Th col="aviso" ordem={fx.ordem} onClick={fx.ordenar}>Último aviso</Th>
               <Th col="ultAb" ordem={fx.ordem} onClick={fx.ordenar}>Último uso</Th>
+              <Th col="min7" ordem={fx.ordem} onClick={fx.ordenar}>Tempo 7d</Th>
               <Th col="grupo" ordem={fx.ordem} onClick={fx.ordenar}>Grupo</Th>
             </tr>
           </thead>
@@ -121,6 +129,9 @@ export function AlunosTabela({ linhas, selected, hoje, buscaInicial = '' }: { li
                   <td className="px-2 py-1.5 text-fg2" title={dmy(l.aviso) ?? 'nenhum aviso enviado'}>{dm(l.aviso) ?? <span className="text-muted">—</span>}</td>
                   <td className="px-2 py-1.5 text-fg2" title={l.ultAb ? `${dmy(l.ultAb)} · ${l.diasAt} dias no período` : 'nunca abriu'}>
                     {d === null ? <span className="text-muted">nunca</span> : d === 0 ? 'hoje' : d === 1 ? 'ontem' : <span className={d >= 7 ? 'text-p0' : ''}>{`há ${d}d`}</span>}
+                  </td>
+                  <td className="px-2 py-1.5 text-fg2" title={`${fmtMin(l.min7) ?? '0'} nos últimos 7 dias · ${fmtMin(l.min30) ?? '0'} nos últimos 30`}>
+                    {fmtMin(l.min7) ?? <span className="text-muted">—</span>}
                   </td>
                   <td className="px-2 py-1.5">
                     <button type="button" onClick={() => fx.alternar('grupo', l.grupo)} title={fx.ativo('grupo', l.grupo) ? 'tirar o filtro' : 'filtrar por este grupo'}
